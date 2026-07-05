@@ -1,0 +1,2750 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Финансовый дашборд ОПУ</title>
+  <style>
+    :root {
+      --bg: #070b24;
+      --panel: rgba(15, 25, 66, 0.76);
+      --panel-strong: rgba(20, 34, 88, 0.9);
+      --ink: #edf6ff;
+      --muted: #91a7d8;
+      --line: rgba(113, 177, 255, 0.28);
+      --teal: #26e6ff;
+      --green: #42ffbd;
+      --red: #ff5c91;
+      --amber: #ffbc66;
+      --blue: #4f8dff;
+      --violet: #b56bff;
+      --steel: #7ea0d7;
+      --shadow: 0 24px 70px rgba(0, 0, 0, 0.45), 0 0 34px rgba(38, 230, 255, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, "Segoe UI Variable", "Segoe UI", Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.42;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: geometricPrecision;
+      background:
+        radial-gradient(circle at 15% 5%, rgba(54, 125, 255, 0.28), transparent 26%),
+        radial-gradient(circle at 82% 14%, rgba(181, 107, 255, 0.22), transparent 28%),
+        radial-gradient(circle at 50% 100%, rgba(38, 230, 255, 0.18), transparent 34%),
+        linear-gradient(145deg, #070b24 0%, #0c1238 48%, #050719 100%);
+      color: var(--ink);
+      letter-spacing: 0;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(91, 153, 255, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(91, 153, 255, 0.08) 1px, transparent 1px);
+      background-size: 42px 42px;
+      mask-image: radial-gradient(circle at 50% 30%, black, transparent 78%);
+      opacity: 0.52;
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 12%;
+      height: 2px;
+      pointer-events: none;
+      background: linear-gradient(90deg, transparent, rgba(38, 230, 255, 0.2), rgba(255, 92, 145, 0.55), rgba(181, 107, 255, 0.35), transparent);
+      box-shadow: 0 0 22px rgba(38, 230, 255, 0.8), 0 0 38px rgba(181, 107, 255, 0.48);
+    }
+
+    .shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 252px minmax(0, 1fr);
+      position: relative;
+      z-index: 1;
+    }
+
+    aside {
+      background: linear-gradient(180deg, rgba(8, 16, 47, 0.94), rgba(9, 18, 54, 0.82));
+      color: #eef6f4;
+      padding: 28px 22px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      gap: 26px;
+      border-right: 1px solid rgba(81, 170, 255, 0.24);
+      box-shadow: inset -1px 0 0 rgba(181, 107, 255, 0.14), 0 0 42px rgba(38, 230, 255, 0.12);
+      backdrop-filter: blur(16px);
+    }
+
+    .brand {
+      display: grid;
+      gap: 8px;
+    }
+
+    .brand strong {
+      font-size: 21px;
+      line-height: 1.15;
+      font-weight: 760;
+      text-shadow: 0 0 18px rgba(38, 230, 255, 0.55);
+    }
+
+    .brand span,
+    .side-meta {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .nav {
+      display: grid;
+      gap: 8px;
+    }
+
+    .nav a {
+      color: #dbeaff;
+      text-decoration: none;
+      padding: 10px 11px;
+      border-radius: 7px;
+      font-size: 14px;
+      background: rgba(42, 70, 143, 0.32);
+      border: 1px solid rgba(113, 177, 255, 0.14);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+
+    .side-meta {
+      margin-top: auto;
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+      padding-top: 18px;
+    }
+
+    main {
+      padding: 28px;
+      display: grid;
+      gap: 18px;
+      min-width: 0;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+
+    .topbar > div:first-child {
+      min-width: min(100%, 520px);
+      flex: 1 1 520px;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: clamp(28px, 3.8vw, 46px);
+      line-height: 1.05;
+      font-weight: 790;
+      text-shadow: 0 0 22px rgba(38, 230, 255, 0.35);
+    }
+
+    .lead {
+      margin: 0;
+      max-width: 720px;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.5;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 150px 150px;
+      gap: 10px;
+      align-items: end;
+      flex: 0 1 310px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 18px;
+    }
+
+    .tab-btn {
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(24, 40, 99, 0.82), rgba(12, 22, 62, 0.82));
+      color: #dbeaff;
+      border-radius: 7px;
+      padding: 10px 14px;
+      min-height: 42px;
+      font: inherit;
+      font-weight: 760;
+      cursor: pointer;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 0 20px rgba(38, 230, 255, 0.08);
+    }
+
+    .tab-btn[aria-selected="true"] {
+      background: linear-gradient(180deg, rgba(35, 96, 180, 0.88), rgba(31, 28, 104, 0.9));
+      border-color: rgba(38, 230, 255, 0.72);
+      color: #eef6f4;
+      box-shadow: 0 0 22px rgba(38, 230, 255, 0.34), inset 0 0 18px rgba(181, 107, 255, 0.22);
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    select {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: rgba(12, 22, 62, 0.92);
+      color: var(--ink);
+      border-radius: 7px;
+      padding: 10px 34px 10px 11px;
+      font: inherit;
+      min-height: 42px;
+      box-shadow: inset 0 0 18px rgba(38, 230, 255, 0.08);
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(138px, 1fr));
+      gap: 12px;
+    }
+
+    .period-summary {
+      display: grid;
+      gap: 14px;
+      max-width: 620px;
+    }
+
+    .period-card {
+      padding: 24px;
+      min-height: 124px;
+      border: 1px solid rgba(192, 207, 231, 0.9);
+      border-radius: 26px;
+      background: #f8fafc;
+      color: #172033;
+      box-shadow: 0 18px 34px rgba(6, 14, 36, 0.16);
+    }
+
+    .period-card span {
+      display: block;
+      color: #66748a;
+      font-size: 16px;
+      line-height: 1.25;
+      font-weight: 850;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .period-card strong {
+      display: block;
+      margin-top: 14px;
+      font-size: clamp(28px, 4.2vw, 34px);
+      line-height: 1;
+      font-weight: 860;
+      white-space: nowrap;
+    }
+
+    .card,
+    .viz,
+    .table-panel {
+      background:
+        linear-gradient(180deg, rgba(25, 39, 92, 0.84), rgba(10, 18, 50, 0.86)),
+        radial-gradient(circle at 100% 0%, rgba(38, 230, 255, 0.16), transparent 36%);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    .card {
+      padding: 16px;
+      display: grid;
+      gap: 8px;
+      min-height: 128px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before,
+    .viz::before,
+    .table-panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      border-radius: inherit;
+      background: linear-gradient(135deg, rgba(38, 230, 255, 0.18), transparent 32%, rgba(181, 107, 255, 0.14));
+      opacity: 0.8;
+    }
+
+    .card > *,
+    .viz > *,
+    .table-panel > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .card span {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.25;
+      font-weight: 720;
+      text-transform: uppercase;
+    }
+
+    .card strong {
+      font-size: clamp(20px, 2.2vw, 29px);
+      line-height: 1;
+      font-weight: 780;
+      white-space: nowrap;
+      text-shadow: 0 0 14px rgba(38, 230, 255, 0.25);
+    }
+
+    .delta {
+      font-size: 13px;
+      font-weight: 730;
+    }
+
+    .delta.good { color: var(--green); }
+    .delta.bad { color: var(--red); }
+    .delta.neutral { color: var(--muted); }
+
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.28fr) minmax(340px, 0.72fr);
+      gap: 14px;
+    }
+
+    .grid.equal {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .viz,
+    .table-panel {
+      padding: 18px;
+      min-width: 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .table-panel {
+      overflow-x: auto;
+    }
+
+    .is-hidden {
+      display: none !important;
+    }
+
+    .viz-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: start;
+      margin-bottom: 10px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.15;
+      text-shadow: 0 0 16px rgba(38, 230, 255, 0.28);
+    }
+
+    .caption {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+      margin-top: 4px;
+    }
+
+    .legend {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 12px;
+      justify-content: end;
+    }
+
+    .key {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    .swatch {
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+      background: var(--teal);
+      box-shadow: 0 0 10px currentColor;
+    }
+
+    .chart {
+      width: 100%;
+      height: 300px;
+      display: block;
+    }
+
+    .chart-tooltip {
+      position: absolute;
+      min-width: 210px;
+      max-width: 290px;
+      padding: 10px 12px;
+      border: 1px solid rgba(113, 177, 255, 0.42);
+      border-radius: 8px;
+      background: rgba(8, 15, 43, 0.94);
+      box-shadow: 0 0 24px rgba(38, 230, 255, 0.22);
+      color: var(--ink);
+      font-size: 12px;
+      line-height: 1.35;
+      pointer-events: none;
+      transform: translate(12px, -50%);
+      opacity: 0;
+      z-index: 5;
+    }
+
+    .chart-tooltip.is-visible {
+      opacity: 1;
+    }
+
+    .chart-tooltip strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 13px;
+    }
+
+    .chart-tooltip .tip-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+    }
+
+    .chart-tooltip .tip-name {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .chart-tooltip b {
+      color: var(--ink);
+      font-weight: 780;
+      white-space: nowrap;
+    }
+
+    .chart.tall {
+      height: 330px;
+    }
+
+    .small-chart {
+      height: 270px;
+    }
+
+    .donut-wrap {
+      display: grid;
+      grid-template-columns: 170px minmax(0, 1fr);
+      gap: 18px;
+      align-items: center;
+    }
+
+    .bars {
+      display: grid;
+      gap: 10px;
+    }
+
+    .bar-row {
+      display: grid;
+      grid-template-columns: 96px minmax(0, 1fr) 76px;
+      gap: 10px;
+      align-items: center;
+      font-size: 13px;
+    }
+
+    .bar-track {
+      height: 12px;
+      background: rgba(135, 176, 255, 0.12);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 6px;
+      background: var(--teal);
+    }
+
+    table {
+      width: 100%;
+      min-width: 620px;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th,
+    td {
+      padding: 10px 8px;
+      border-bottom: 1px solid var(--line);
+      text-align: right;
+      vertical-align: middle;
+    }
+
+    th:first-child,
+    td:first-child {
+      text-align: left;
+      width: 18%;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      font-weight: 760;
+      background: rgba(40, 68, 140, 0.22);
+    }
+
+    tr:last-child td { border-bottom: 0; }
+
+    .scenario-toolbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: end;
+      flex-wrap: wrap;
+      margin: 14px 0;
+    }
+
+    .scenario-toolbar label {
+      min-width: 190px;
+    }
+
+    .scenario-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .ghost-btn {
+      border: 1px solid var(--line);
+      background: rgba(12, 22, 62, 0.72);
+      color: var(--ink);
+      border-radius: 7px;
+      min-height: 38px;
+      padding: 8px 12px;
+      font: inherit;
+      font-weight: 760;
+      cursor: pointer;
+      box-shadow: inset 0 0 18px rgba(38, 230, 255, 0.08);
+    }
+
+    .scenario-summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(150px, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .scenario-mini {
+      border: 1px solid rgba(113, 177, 255, 0.2);
+      border-radius: 8px;
+      padding: 12px;
+      background: rgba(10, 18, 50, 0.48);
+    }
+
+    .scenario-mini span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 760;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .scenario-mini strong {
+      font-size: 20px;
+      line-height: 1;
+      text-shadow: 0 0 12px rgba(38, 230, 255, 0.24);
+    }
+
+    .scenario-table {
+      min-width: 1100px;
+    }
+
+    .scenario-table-wrap {
+      overflow-x: auto;
+      overflow-y: visible;
+      max-width: 100%;
+    }
+
+    .scenario-scrollbar {
+      overflow-x: auto;
+      overflow-y: hidden;
+      max-width: 100%;
+      height: 18px;
+      margin: 10px 0 4px;
+      border-radius: 999px;
+      background: #f1f4f9;
+    }
+
+    .scenario-scrollbar-inner {
+      height: 1px;
+    }
+
+    .scenario-table th:first-child,
+    .scenario-table td:first-child {
+      position: sticky;
+      left: 0;
+      z-index: 2;
+      width: 330px;
+      min-width: 330px;
+      background: rgba(13, 24, 64, 0.98);
+      text-align: left;
+    }
+
+    .article-check {
+      display: grid;
+      grid-template-columns: 18px minmax(0, 1fr);
+      gap: 10px;
+      align-items: start;
+      color: var(--ink);
+      font-size: 13px;
+      font-weight: 650;
+      text-transform: none;
+      line-height: 1.25;
+    }
+
+    .article-check input {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--teal);
+      margin: 0;
+      transform: translateY(1px);
+    }
+
+    .scenario-total td {
+      color: var(--green);
+      font-weight: 800;
+      background: rgba(66, 255, 189, 0.08);
+    }
+
+    .scenario-net td {
+      color: var(--amber);
+      font-weight: 800;
+      background: rgba(255, 188, 102, 0.08);
+    }
+
+    .scenario-potential td {
+      color: var(--green);
+      font-weight: 850;
+      background: rgba(66, 255, 189, 0.14);
+      box-shadow: inset 0 1px 0 rgba(66, 255, 189, 0.14);
+    }
+
+    .scenario-result {
+      display: grid;
+      gap: 14px;
+      margin-top: 16px;
+    }
+
+    .scenario-result-head {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      color: var(--ink);
+      font-weight: 850;
+      font-size: 16px;
+    }
+
+    .scenario-result-head::before {
+      content: "";
+      width: 9px;
+      height: 22px;
+      border-radius: 999px;
+      background: #2f5bd8;
+    }
+
+    .scenario-result-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .scenario-result-card {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 15px;
+      background: #ffffff;
+      box-shadow: var(--shadow);
+    }
+
+    .scenario-result-card span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.2;
+      font-weight: 850;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .scenario-result-card strong {
+      display: block;
+      color: var(--ink);
+      font-size: clamp(20px, 2vw, 25px);
+      line-height: 1;
+      font-weight: 860;
+      overflow-wrap: anywhere;
+    }
+
+    .scenario-charts {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .scenario-before-after,
+    .scenario-waterfall {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+      background: #ffffff;
+      box-shadow: var(--shadow);
+      min-width: 0;
+    }
+
+    .scenario-before-after h3,
+    .scenario-waterfall h3 {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.2;
+    }
+
+    .scenario-before-after p,
+    .scenario-waterfall p {
+      margin: 3px 0 10px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .scenario-before-after svg,
+    .scenario-waterfall svg {
+      width: 100%;
+      height: 330px;
+      display: block;
+    }
+
+    .expense-summary {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .expense-card {
+      border: 1px solid rgba(113, 177, 255, 0.2);
+      border-radius: 8px;
+      padding: 12px;
+      background: rgba(10, 18, 50, 0.48);
+    }
+
+    .expense-card span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 760;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .expense-card strong {
+      display: block;
+      font-size: 20px;
+      line-height: 1;
+      text-shadow: 0 0 12px rgba(38, 230, 255, 0.24);
+    }
+
+    .expense-card em {
+      display: block;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      font-style: normal;
+      line-height: 1.35;
+    }
+
+    .expense-bar {
+      min-width: 120px;
+    }
+
+    .expense-bar-track {
+      height: 9px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(126, 160, 215, 0.14);
+    }
+
+    .expense-bar-fill {
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--teal), var(--violet));
+      box-shadow: 0 0 14px rgba(38, 230, 255, 0.28);
+    }
+
+    .group-row td {
+      color: var(--teal);
+      font-weight: 850;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      background: rgba(38, 230, 255, 0.08);
+    }
+
+    .memo-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin: 16px 0;
+    }
+
+    .memo-card {
+      border: 1px solid rgba(113, 177, 255, 0.2);
+      border-radius: 8px;
+      padding: 14px;
+      background: rgba(10, 18, 50, 0.5);
+    }
+
+    .memo-card span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 760;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .memo-card strong {
+      display: block;
+      font-size: 24px;
+      line-height: 1;
+      margin-bottom: 7px;
+      text-shadow: 0 0 14px rgba(38, 230, 255, 0.24);
+    }
+
+    .memo-card p,
+    .memo-text p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .memo-text {
+      display: grid;
+      gap: 16px;
+      max-width: 1040px;
+    }
+
+    .memo-block {
+      border-top: 1px solid rgba(113, 177, 255, 0.18);
+      padding-top: 14px;
+    }
+
+    .memo-block h3 {
+      margin: 0 0 8px;
+      font-size: 16px;
+      line-height: 1.2;
+      color: var(--ink);
+    }
+
+    .memo-block ul {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 14px;
+    }
+
+    .memo-block li + li {
+      margin-top: 6px;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 74px;
+      border-radius: 999px;
+      padding: 5px 8px;
+      font-weight: 760;
+      font-size: 12px;
+      background: rgba(66, 255, 189, 0.12);
+      color: var(--green);
+    }
+
+    .status.bad {
+      background: rgba(255, 92, 145, 0.12);
+      color: var(--red);
+    }
+
+    @media (max-width: 1120px) {
+      .shell { grid-template-columns: 1fr; }
+      aside {
+        position: static;
+        height: auto;
+        padding: 18px 22px;
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+      .side-meta { display: none; }
+      .nav {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+      .expense-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .grid,
+      .grid.equal { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 1320px) {
+      .donut-wrap { grid-template-columns: 1fr; }
+      .small-chart { height: 210px; }
+    }
+
+    @media (max-width: 720px) {
+      main { padding: 18px 14px; }
+      .topbar { display: grid; }
+      .controls { grid-template-columns: 1fr 1fr; }
+      .nav { grid-template-columns: 1fr; }
+      .tabs { display: grid; grid-template-columns: 1fr; }
+      .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .card strong { font-size: 20px; }
+      .period-card { padding: 20px; min-height: 112px; }
+      .period-card span { font-size: 13px; }
+      .period-card strong { font-size: 26px; white-space: normal; }
+      .viz-head { display: grid; }
+      .legend { justify-content: start; }
+      .donut-wrap { grid-template-columns: 1fr; }
+      .bar-row { grid-template-columns: 82px minmax(0, 1fr) 64px; }
+      .chart { height: 250px; }
+      .expense-summary { grid-template-columns: 1fr; }
+    }
+
+    /* Light CFO theme based on the reference dashboard. */
+    :root {
+      --bg: #fff4e7;
+      --panel: #ffffff;
+      --panel-strong: #ffffff;
+      --ink: #182238;
+      --muted: #68758a;
+      --line: #e4e9f2;
+      --teal: #25b9c8;
+      --green: #21a67a;
+      --red: #e04767;
+      --amber: #f3a33a;
+      --blue: #5b8def;
+      --violet: #9a3d79;
+      --steel: #9aa8bc;
+      --shadow: 0 16px 34px rgba(33, 43, 70, 0.08);
+    }
+
+    body {
+      background:
+        radial-gradient(circle at 8% 10%, rgba(255, 213, 123, 0.9), transparent 30%),
+        radial-gradient(circle at 92% 12%, rgba(255, 109, 74, 0.8), transparent 34%),
+        linear-gradient(135deg, #ffd66e 0%, #ff9a4d 48%, #f36a3f 100%);
+      color: var(--ink);
+    }
+
+    body::before,
+    body::after {
+      display: none;
+    }
+
+    .shell {
+      width: min(1320px, calc(100% - 48px));
+      min-height: calc(100vh - 64px);
+      margin: 32px auto;
+      grid-template-columns: 176px minmax(0, 1fr);
+      background: #f6f8fb;
+      border: 1px solid rgba(255, 255, 255, 0.72);
+      border-radius: 26px;
+      box-shadow: 0 30px 70px rgba(116, 56, 14, 0.26);
+      overflow: hidden;
+    }
+
+    aside {
+      background: #ffffff;
+      color: var(--ink);
+      padding: 20px 12px;
+      border-right: 1px solid #e7ebf2;
+      box-shadow: 12px 0 30px rgba(33, 43, 70, 0.04);
+      align-items: stretch;
+    }
+
+    .brand {
+      width: 100%;
+      height: 52px;
+      place-items: center start;
+      border-radius: 16px;
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      padding-left: 16px;
+    }
+
+    .brand strong {
+      font-size: 0;
+      width: 26px;
+      height: 18px;
+      position: relative;
+      text-shadow: none;
+    }
+
+    .brand strong::before,
+    .brand strong::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      width: 26px;
+      height: 2px;
+      border-radius: 999px;
+      background: #2a3347;
+      box-shadow: 0 8px 0 #2a3347;
+    }
+
+    .brand strong::before { top: 0; }
+    .brand strong::after { bottom: 0; box-shadow: none; }
+
+    .brand span,
+    .side-meta {
+      display: none;
+    }
+
+    .nav {
+      width: 100%;
+      gap: 12px;
+    }
+
+    .nav a {
+      display: grid;
+      align-items: center;
+      min-height: 44px;
+      padding: 9px 12px;
+      color: #778499;
+      background: #ffffff;
+      border: 0;
+      border-radius: 14px;
+      box-shadow: none;
+      font-size: 12.5px;
+      line-height: 1.18;
+      text-align: left;
+      font-weight: 760;
+      overflow-wrap: anywhere;
+    }
+
+    .nav a:hover,
+    .nav a:focus-visible {
+      color: #e04767;
+      background: #fff1f3;
+      outline: none;
+    }
+
+    main {
+      padding: 24px;
+      gap: 16px;
+    }
+
+    .topbar {
+      align-items: center;
+      padding: 18px;
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    h1 {
+      font-size: clamp(26px, 3vw, 38px);
+      letter-spacing: 0;
+      text-shadow: none;
+      color: #182238;
+    }
+
+    .lead {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .tabs {
+      gap: 10px;
+    }
+
+    .tab-btn,
+    .ghost-btn {
+      border-color: #eadbe7;
+      background: #ffffff;
+      color: #7a4866;
+      border-radius: 999px;
+      box-shadow: 0 8px 18px rgba(154, 61, 121, 0.08);
+      font-size: 13.5px;
+      line-height: 1.15;
+      white-space: normal;
+    }
+
+    .tab-btn[aria-selected="true"],
+    .ghost-btn:hover {
+      background: linear-gradient(135deg, #8b2f66, #e04767);
+      border-color: transparent;
+      color: #ffffff;
+      box-shadow: 0 14px 24px rgba(224, 71, 103, 0.24);
+    }
+
+    select {
+      background: #ffffff;
+      color: var(--ink);
+      border-color: var(--line);
+      border-radius: 12px;
+      box-shadow: none;
+    }
+
+    label {
+      color: var(--muted);
+    }
+
+    .period-summary {
+      max-width: 620px;
+    }
+
+    .period-card,
+    .card,
+    .viz,
+    .table-panel,
+    .scenario-mini,
+    .expense-card,
+    .memo-card {
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      color: var(--ink);
+      backdrop-filter: none;
+    }
+
+    .period-card {
+      border-radius: 24px;
+      background: #fbfcff;
+    }
+
+    .period-card span {
+      font-size: 14px;
+      letter-spacing: 0.035em;
+    }
+
+    .period-card strong {
+      font-size: clamp(26px, 3vw, 34px);
+      letter-spacing: 0;
+    }
+
+    .card::before,
+    .viz::before,
+    .table-panel::before {
+      display: none;
+    }
+
+    .card {
+      min-height: 112px;
+    }
+
+    .card span {
+      font-size: 11.5px;
+      letter-spacing: 0.02em;
+    }
+
+    .card span,
+    .scenario-mini span,
+    .expense-card span,
+    .memo-card span {
+      color: var(--muted);
+    }
+
+    .card strong,
+    .scenario-mini strong,
+    .expense-card strong,
+    .memo-card strong {
+      color: var(--ink);
+      text-shadow: none;
+    }
+
+    .card strong {
+      font-size: clamp(19px, 1.8vw, 26px);
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+
+    .delta {
+      line-height: 1.25;
+    }
+
+    .card:nth-child(1),
+    .card:nth-child(4) {
+      border-top: 4px solid var(--amber);
+    }
+
+    .card:nth-child(2),
+    .card:nth-child(5) {
+      border-top: 4px solid var(--violet);
+    }
+
+    .card:nth-child(3),
+    .card:nth-child(6) {
+      border-top: 4px solid var(--red);
+    }
+
+    h2,
+    .memo-block h3 {
+      color: #28344a;
+      text-shadow: none;
+    }
+
+    .caption,
+    .legend,
+    .memo-card p,
+    .memo-text p,
+    .memo-block ul {
+      color: var(--muted);
+    }
+
+    .chart-tooltip {
+      border-color: #e4e9f2;
+      background: rgba(255, 255, 255, 0.96);
+      box-shadow: 0 18px 38px rgba(33, 43, 70, 0.16);
+      color: var(--ink);
+    }
+
+    .bar-track,
+    .expense-bar-track {
+      background: #edf1f7;
+    }
+
+    table {
+      color: var(--ink);
+    }
+
+    th,
+    td {
+      border-bottom-color: var(--line);
+    }
+
+    th {
+      background: #f4f6fa;
+      color: var(--muted);
+    }
+
+    .scenario-table th:first-child,
+    .scenario-table td:first-child {
+      background: #ffffff;
+    }
+
+    .article-check {
+      color: var(--ink);
+    }
+
+    .article-check input {
+      accent-color: var(--red);
+    }
+
+    .scenario-net td {
+      color: #9a6a1a;
+      background: #fff7e8;
+    }
+
+    .scenario-total td,
+    .scenario-potential td {
+      color: var(--green);
+      background: #ebfbf5;
+      box-shadow: none;
+    }
+
+    .group-row td {
+      color: #8b2f66;
+      background: #fff1f7;
+    }
+
+    .status {
+      background: #e9fbf4;
+      color: var(--green);
+    }
+
+    .status.bad {
+      background: #fff0f3;
+      color: var(--red);
+    }
+
+    .period-summary {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      max-width: none;
+      gap: 12px;
+    }
+
+    .period-card {
+      min-height: 104px;
+      padding: 18px;
+      border-radius: 18px;
+    }
+
+    .period-card span {
+      font-size: 12px;
+      line-height: 1.2;
+    }
+
+    .period-card strong {
+      margin-top: 10px;
+      font-size: clamp(22px, 2.1vw, 30px);
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+
+    .total-row td {
+      background: #f7f8fb;
+      color: var(--ink);
+      font-weight: 850;
+      border-top: 2px solid #d9e0eb;
+    }
+
+    @media (max-width: 1120px) {
+      .shell {
+        width: min(100% - 24px, 960px);
+        grid-template-columns: 1fr;
+        margin: 12px auto;
+        border-radius: 20px;
+      }
+
+      aside {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        align-items: center;
+        height: auto;
+        padding: 12px;
+      }
+
+      .nav {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .nav a {
+        min-height: 42px;
+        border-radius: 12px;
+        justify-content: center;
+        text-align: center;
+        font-size: 12px;
+      }
+
+      .period-summary {
+        grid-template-columns: 1fr;
+      }
+
+      .scenario-result-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .scenario-charts {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .shell {
+        width: 100%;
+        margin: 0;
+        border-radius: 0;
+      }
+
+      .nav {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      main {
+        padding: 14px;
+      }
+
+      .topbar {
+        padding: 14px;
+      }
+
+      .scenario-result-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .shell {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    aside {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <main>
+      <section class="topbar" id="summary">
+        <div>
+          <h1 id="dashboardTitle">Полный анализ М1</h1>
+          <p class="lead" id="dashboardLead">Помесячная динамика выручки, каналов продаж, чистой прибыли и расходов по точке М1.</p>
+          <div class="tabs" role="tablist" aria-label="Разделы анализа">
+            <button class="tab-btn" type="button" data-tab="m1" role="tab" onclick="setActiveTab('m1')">М1</button>
+            <button class="tab-btn" type="button" data-tab="m3" role="tab" onclick="setActiveTab('m3')">М3</button>
+            <button class="tab-btn" type="button" data-tab="both" role="tab" onclick="setActiveTab('both')">М1 + М3</button>
+            <button class="tab-btn" type="button" data-tab="scenario" role="tab" onclick="setActiveTab('scenario')">Что если</button>
+            <button class="tab-btn" type="button" data-tab="memo" role="tab" onclick="setActiveTab('memo')">Записка</button>
+          </div>
+        </div>
+        <div class="controls">
+          <label>
+            С
+            <select id="fromPeriod"></select>
+          </label>
+          <label>
+            По
+            <select id="toPeriod"></select>
+          </label>
+        </div>
+      </section>
+
+      <section class="period-summary analysis-section" id="periodSummary" aria-label="Сводка за выбранный период"></section>
+
+      <section class="cards analysis-section" id="cards" aria-label="KPI"></section>
+
+      <section class="table-panel is-hidden" id="scenario">
+        <div class="viz-head">
+          <div>
+            <h2>Сценарий “что если”</h2>
+            <div class="caption">Выберите статьи затрат: итоговая строка покажет помесячный эффект, если эти расходы убрать из сценария.</div>
+          </div>
+        </div>
+        <div class="scenario-toolbar">
+          <label>
+            Точка
+            <select id="scenarioBook">
+              <option value="m1">М1</option>
+              <option value="m3">М3</option>
+              <option value="both">М1 + М3</option>
+            </select>
+          </label>
+          <div class="scenario-actions">
+            <button class="ghost-btn" type="button" id="scenarioAll">Выбрать все</button>
+            <button class="ghost-btn" type="button" id="scenarioNone">Снять все</button>
+          </div>
+        </div>
+        <div class="scenario-summary" id="scenarioSummary"></div>
+        <div class="scenario-table-wrap" id="scenarioTableWrap">
+          <table class="scenario-table" id="scenarioTable">
+            <thead id="scenarioHead"></thead>
+            <tbody id="scenarioBody"></tbody>
+          </table>
+        </div>
+        <div class="scenario-scrollbar" id="scenarioScrollbar" aria-label="Горизонтальная прокрутка таблицы">
+          <div class="scenario-scrollbar-inner" id="scenarioScrollbarInner"></div>
+        </div>
+        <section class="scenario-result" id="scenarioResult" aria-label="Итог сценария"></section>
+      </section>
+
+      <section class="table-panel is-hidden" id="memo">
+        <div class="viz-head">
+          <div>
+            <h2>Аналитическая записка</h2>
+            <div class="caption">Фокус: соотношение динамики выручки и расходов по М1, М3 и двум точкам вместе</div>
+          </div>
+        </div>
+
+        <div class="memo-grid">
+          <div class="memo-card">
+            <span>М1, май 2025 - май 2026</span>
+            <strong>-27,9% / -14,1%</strong>
+            <p>Выручка падает быстрее расходов. Доля расходов выросла с 27,3% до 32,5%.</p>
+          </div>
+          <div class="memo-card">
+            <span>М3, май 2025 - май 2026</span>
+            <strong>+115,4% / +38,3%</strong>
+            <p>Выручка растет быстрее расходов. Убыток сократился, но точка еще не вышла в плюс.</p>
+          </div>
+          <div class="memo-card">
+            <span>М1 + М3, общий период</span>
+            <strong>-11,1% / -1,0%</strong>
+            <p>Суммарная выручка снизилась, расходы почти не изменились. Доля расходов выросла до 35,7%.</p>
+          </div>
+        </div>
+
+        <div class="memo-text">
+          <div class="memo-block">
+            <h3>Ключевой вывод</h3>
+            <p>Основная проблема не только в абсолютной сумме затрат, а в их слабой эластичности к выручке. По двум точкам вместе выручка снизилась на 11,1%, а расходы снизились только на 1,0%. Из-за этого доля расходов в выручке выросла с 32,1% до 35,7%. Чистая прибыль суммарно немного выросла с 591 тыс до 663 тыс, но улучшение хрупкое: его поддерживает восстановление М3, пока М1 теряет прибыльность.</p>
+          </div>
+
+          <div class="memo-block">
+            <h3>М1</h3>
+            <p>М1 остается прибыльной, но качество прибыли ухудшается. С мая 2025 по май 2026 выручка упала на 27,9%, расходы сократились только на 14,1%, а ЧП снизилась с 1,29 млн до 838 тыс. Самый тревожный период - сентябрь-октябрь 2025: в сентябре расходы выросли на 20,2% к предыдущему месяцу при падении выручки на 3,7%, и точка ушла в убыток.</p>
+          </div>
+
+          <div class="memo-block">
+            <h3>М3</h3>
+            <p>М3 показывает правильную операционную динамику: выручка выросла на 115,4%, расходы - на 38,3%, доля расходов снизилась с 68,1% до 43,7%. Убыток сократился с -695 тыс до -175 тыс. При этом за весь период М3 остается убыточной, поэтому ближайшая цель - довести точку до break-even.</p>
+          </div>
+
+          <div class="memo-block">
+            <h3>Крупнейшие управляемые статьи</h3>
+            <ul>
+              <li>Управление - 5,36 млн за общий период М1+М3.</li>
+              <li>Ремонт и обслуживание прочего оборудования и инвентаря - 1,56 млн.</li>
+              <li>Услуги сайтов по трудоустройству и подбору персонала - 1,54 млн.</li>
+              <li>Транспортное обеспечение сотрудников - 1,38 млн.</li>
+              <li>Содержание отдела обслуживания - 1,35 млн.</li>
+              <li>Оплата труда АУП - 1,20 млн.</li>
+            </ul>
+          </div>
+
+          <div class="memo-block">
+            <h3>Рекомендации</h3>
+            <ul>
+              <li>Ввести целевой коридор расходов как долю от выручки: для М1 - до 30-32%, для М3 - сначала до 40-42%, затем ниже.</li>
+              <li>Для М1 ввести правило быстрой реакции: если выручка падает больше чем на 5% MoM, в этом же месяце пересматривать переменные и полуфиксированные расходы.</li>
+              <li>По М3 сфокусироваться на достижении break-even: в мае 2026 не хватает около 175 тыс до нулевой ЧП.</li>
+              <li>Разобрать статью “Управление”: определить, это прямой расход точки или распределение сверху. Если распределение, проверить базу распределения, чтобы не перегружать М3 на этапе роста.</li>
+              <li>По подбору персонала, транспорту, жилью и командировкам установить лимиты, владельцев расходов и ежемесячный контроль отклонений.</li>
+              <li>В основной контроль добавить показатель “темп выручки vs темп расходов”. Красный сигнал: расходы растут быстрее выручки или падают медленнее выручки.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid equal analysis-section" id="revenue">
+        <article class="viz">
+          <div class="viz-head">
+            <div>
+              <h2>Выручка по месяцам</h2>
+              <div class="caption" id="revenueCaption"></div>
+            </div>
+            <div class="legend">
+              <span class="key"><i class="swatch" style="background: var(--teal)"></i>М1</span>
+              <span class="key"><i class="swatch" style="background: var(--blue)"></i>М3</span>
+            </div>
+          </div>
+          <svg id="revenueChart" class="chart" role="img" aria-label="Динамика выручки по месяцам"></svg>
+        </article>
+
+        <article class="viz" id="profit">
+          <div class="viz-head">
+            <div>
+              <h2>Чистая прибыль по месяцам</h2>
+              <div class="caption" id="profitCaption"></div>
+            </div>
+            <div class="legend">
+              <span class="key"><i class="swatch" style="background: var(--amber)"></i>М1</span>
+              <span class="key"><i class="swatch" style="background: var(--red)"></i>М3</span>
+            </div>
+          </div>
+          <svg id="profitChart" class="chart" role="img" aria-label="Динамика чистой прибыли по месяцам"></svg>
+        </article>
+      </section>
+
+      <section class="grid equal analysis-section">
+        <article class="viz" id="channels">
+          <div class="viz-head">
+            <div>
+              <h2>Каналы продаж по месяцам</h2>
+              <div class="caption" id="channelCaption"></div>
+            </div>
+            <div class="legend">
+              <span class="key"><i class="swatch" style="background: var(--teal)"></i>Доставка</span>
+              <span class="key"><i class="swatch" style="background: var(--blue)"></i>Ресторан</span>
+              <span class="key"><i class="swatch" style="background: var(--amber)"></i>Самовывоз</span>
+            </div>
+          </div>
+          <svg id="channelChart" class="chart tall" role="img" aria-label="Динамика каналов продаж по месяцам"></svg>
+        </article>
+
+        <article class="viz" id="costs">
+          <div class="viz-head">
+            <div>
+              <h2>Расходы по месяцам</h2>
+              <div class="caption" id="expenseCaption"></div>
+            </div>
+            <div class="legend">
+              <span class="key"><i class="swatch" style="background: var(--red)"></i>Операционные расходы</span>
+            </div>
+          </div>
+          <svg id="expenseChart" class="chart tall" role="img" aria-label="Динамика расходов по месяцам"></svg>
+        </article>
+      </section>
+
+      <section class="table-panel analysis-section" id="expenseStructure">
+        <div class="viz-head">
+          <div>
+            <h2>Структура расходов</h2>
+            <div class="caption" id="expenseStructureCaption">Раскрытие расходов по ключевым статьям выбранного периода</div>
+          </div>
+        </div>
+        <div class="expense-summary" id="expenseSummary"></div>
+        <table id="expenseStructureTable">
+          <thead id="expenseStructureHead"></thead>
+          <tbody id="expenseStructureBody"></tbody>
+        </table>
+      </section>
+
+      <section class="table-panel analysis-section">
+        <div class="viz-head">
+          <div>
+            <h2>Помесячные значения</h2>
+            <div class="caption">Строки не суммируются: каждая строка - отдельный месяц выбранного периода</div>
+          </div>
+        </div>
+        <table id="monthlyTableWrap">
+          <thead id="monthlyHead">
+            <tr>
+              <th>Месяц</th>
+              <th>Точка</th>
+              <th>Выручка</th>
+              <th>Чистая прибыль</th>
+              <th>Расходы</th>
+              <th>Каналы</th>
+            </tr>
+          </thead>
+          <tbody id="monthlyTable"></tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const csv = `book,period,r,d,rest,pick,cogs,prod,pack,kitch,ploss,wloss,exp,delExp,mkt,prem,mat,emp,bank,other,taxes,roy,se,netMgmt,ebitda,net,gross,disc,discRate
+m1,Июль 2024,9987539,5067206,4919637,696,5276618.83,3998701.78,362977.17,900627.88,379247.4,22571.56,2520348.74,998323.67,315929.53,434923,293228.6,106677.6,87532.26,202391.84,,599253.09,1591318.34,421698.51,1169619.83,1024475.29,11463507,1475968,0.13
+m1,Август 2024,11536847,5942112,5594206,529,5850394.38,4412390.52,414729.04,1016345.82,243743.33,18856.77,2619613.53,1098646,377850.64,510824.81,231081.41,138591.14,91498.4,97978.92,,692210.58,2371097.51,507134.6,1863962.91,1749138.91,13341276,1804429,0.14
+m1,Сентябрь 2024,10172942,5107442,5065500,,5544827.53,4155871.87,384400.55,1002455.11,420392.44,32383.49,2633051.81,991934.47,309723.58,686221,144322.24,222285.6,89900.07,87559.66,0.52,610376.58,1388217.08,458025.57,930191.51,827369.19,11735090,1562148,0.13
+m1,Октябрь 2024,10740153,5666088,5074065,,5635339.14,4219138.94,386916.7,1029283.5,383498.57,18449.39,2933034.55,1159876.29,344668.49,666355,276933.95,182487.97,96459.14,100765.68,,644409.38,1488070.93,467158.9,1020912.03,861515.97,12190243,1450090,0.12
+m1,Ноябрь 2024,10026541,5104028,4922513,,5537431.76,3871132.51,370012.03,1270637.22,226326.55,18394.98,2553297.23,1017057.13,315667.65,521393,177085.27,234754.21,79830.73,128702.68,,601592.5,1375569.51,428609.54,946959.97,845273.79,11308284,1281743,0.11
+m1,Декабрь 2024,11675514,6586962,5088552,,5613191.62,4314932.25,426257.02,850627.35,264517.33,34050.73,3021881.37,1192776.77,367088.52,581081,263031.57,215449.92,94795.67,208860.69,,700531.19,2339909.82,478749.73,1861160.09,1744404.95,13311987,1636473,0.12
+m1,Январь 2025,11131803,6005158,5126645,,6289643.26,4369365.68,425032.12,1466745.46,218661.15,25947.09,3129134.84,1116080.81,336166.55,558739,238988.98,252004.55,92666.43,93021.25,356203.49,667908.99,1044665.91,471420.42,573245.49,573245.49,12843758,1711955,0.13
+m1,Февраль 2025,10436386,6190527,4245859,,5861881.06,4091915.2,386391.85,1363149.01,110548.47,11693.77,3345147.29,1173722.75,337152.6,641355.4,280006.36,181076.09,83662.75,138907.92,332544.7,626184.15,601050.5,389395.89,211654.61,211654.61,11969431,1533045,0.13
+m1,Март 2025,11185293,6357775,4827518,,6480355.77,4329107.68,411221.07,1719602.02,139588.84,16024.7,3442716.39,1217804.77,342955.92,676853.7,331645.4,222255.95,88196.66,105016.14,356407.85,671117.64,588898.2,476945.8,111952.4,111952.4,13063412,1878119,0.14
+m1,Апрель 2025,12116047,6982722,5133325,,6352454.83,4466067.91,414482.17,1448110.14,176856.51,17806.58,3165631.24,1279596.21,375982.17,647546.99,181472.6,194227.35,95221.49,163092.81,102160,726963.05,1870997.88,488236.7,1382761.18,1382761.18,13933544,1817497,0.13
+m1,Май 2025,11849109,6708846,5140263,,6152893.82,4154607.23,396997.06,1601289.53,182516.36,22540.79,3232335.28,1202143.95,355519.56,642719,452700.92,172595.5,91082.58,139671.77,90159,710947.34,1753979.56,467722.79,1286256.77,1286256.77,13375279,1526170,0.11
+m1,Июнь 2025,11523666,6516005,5007661,,6071940.56,4087418.01,397916.15,1539106.4,193254.87,30244.24,3521097.11,1154905.24,417197.87,843080.58,436314.83,236631.28,86587.34,177344.22,77531.75,691421.06,1234760.27,474599.88,760160.39,760160.39,13088739,1565073,0.12
+m1,Июль 2025,10468913,6119501,4349412,,5583500.19,3692204.12,354703.45,1510367.62,244589.76,18112.31,3525678.44,1014266.51,360464.28,896091.43,299707.31,184465.24,86994.6,183790.01,419183.06,628135.65,724041.72,476127.44,247914.28,247914.28,11819757,1350844,0.11
+m1,Август 2025,10558349,5963850,4594499,,5562345.65,3748920.19,351642.87,1442307.59,262498.69,24569.17,3271978.54,972708.22,342490.46,619253.5,293766.9,239130.23,85533.39,86236.14,422764.14,633501.81,1091426,381339.53,710086.47,710086.47,11887849,1329500,0.11
+m1,Сентябрь 2025,10162883,5877286,4285597,,5206101.04,3603388.01,317141.72,1263621.31,144937.74,16232.4,3932416.1,1047142.88,414091,860476.39,627553.76,222793.81,85180.93,77278.62,406929.39,609772.34,413141.52,450595.48,-37453.96,-37453.96,11612779,1449896,0.12
+m1,Октябрь 2025,10483190,5847730,4635241,219,5400613.26,3643204.95,343278.19,1411930.12,114748.51,18802.77,3959243.41,1013022.62,339498.29,727679.33,666858.01,336418.23,79134.28,106913.46,479950.17,628991.98,432233.35,445820.73,-13587.38,-13587.38,12067280,1584090,0.13
+m1,Ноябрь 2025,10266736,5754464,4510579,1693,5036414.13,3644282.25,297671.26,1070860.62,141726.15,14331.52,3407549.7,1020660.14,315163.81,740567.57,369608.28,150559.06,72028.07,86103.48,470040.29,616005.57,1132341.6,389111.14,743230.46,743230.46,11861591,1594855,0.13
+m1,Декабрь 2025,11216254,6379721,4836533,,5749411.66,3988735.34,376008.25,1278868.07,196933.14,19918.35,4002255.35,1138367.82,343711.36,702978.05,414638.32,452721.95,87687.17,158232.96,513511.92,672975.24,857312.75,418504.55,438808.2,438808.2,12979132,1762878,0.14
+m1,Январь 2026,9754552,5500741,4253811,,4906960.8,3470455.54,332052.89,1085252.37,236121.83,19061.75,3541182.37,1022822.66,294453.58,852357.91,391312.32,177466.08,90366.36,95397.19,395365.67,595027.72,762712.11,292636.46,470075.65,470075.65,11208099,1453547,0.13
+m1,Февраль 2026,8157428,5011661,3145767,,4090371.93,2874426.87,273125.29,900319.77,179092.21,12881.96,3126060.7,872717.35,266920.34,795700.56,246925.53,179213.8,73401.36,96675.31,330631.99,497603.16,428484.21,244722.95,183761.26,183761.26,9431847,1274419,0.14
+m1,Март 2026,8797137,5105532,3691605,,4277873.24,3079413.88,299638.46,843595.9,119816.91,17835.61,3043234.9,881132.27,294598.85,766425.3,257526.95,137295.54,80530.76,83759.39,356560.3,536625.42,917556.44,263914.23,653642.21,653642.21,10214648,1417511,0.14
+m1,Апрель 2026,8750997,4818039,3932958,,4646856.36,3229157.76,315234.48,1041234.12,237658.25,13107.42,3051747.12,853065.93,371847.44,741194.91,355782.11,152725.59,70483.17,109627.13,262529.91,533810.85,501484.67,262530.01,238954.66,238954.66,10591658,1840661,0.17
+m1,Май 2026,8539699,4927933,3611766,,4141948.45,2899337.86,293077.01,923099.58,181060.21,21394.39,2776974.07,899293.22,283861.46,801911.15,370964.06,121423.5,69902.66,107979.03,,520921.67,1094039.81,256191.07,837848.74,837848.74,9917358,1377659,0.14
+m3,Май 2025,1577227,805219,772008,,1064650.34,570792.7,52516.5,434341.14,43447.2,3358.28,1074349.81,132786.18,58370.93,392819,146522.95,99898.95,10324.98,144565.29,12001.01,66248.8,-633021.95,62137.39,-695159.34,-695159.34,1765973,188746,0.11
+m3,Июнь 2025,3660685,1495934,2164751,,2219549.77,1316348.55,125667.7,765433.52,75809.99,5808.56,1379707.82,236468.56,115743.49,462565.13,138847.66,139001.27,28262.24,145759.45,24629.26,153761.64,-106144.23,165204.04,-271348.27,-271348.27,4145706,485021,0.12
+m3,Июль 2025,4646665,1707837,2938828,,2891089.69,1810204.49,191761,864624.2,148617.08,18763.56,2041761.18,295760.31,422325.38,652237,118784.08,131759.67,35680.02,148391.45,186055.93,195179.27,-571565.14,233158.97,-804724.11,-804724.11,5737043,1090378,0.19
+m3,Август 2025,4689098,1753579,2935519,,2799729.56,1658135.18,161569.77,952224.61,97597.86,9760.42,1876439.88,251248.28,166412.77,548149.49,226010.33,272065.46,42514.9,33323.45,187754.97,196959.86,-202915.3,192432.11,-395347.41,-395347.41,5270284,581186,0.11
+m3,Сентябрь 2025,3187816,1279405,1908411,,2118946.55,1181155.83,118873.14,786417.58,84313.84,14353.95,1785157.89,179766.62,196561.15,699578.88,94551.39,216039.72,30717.52,59275.09,127642.52,133900.23,-770188.67,167182.18,-937370.85,-937370.85,3655210,467394,0.13
+m3,Октябрь 2025,2928406,1025140,1903266,,2073419.72,1091386.31,96794.1,859059.31,86483.45,9588.03,2023030.97,152438.97,106295.39,596365.18,127435.77,741957.14,26472.94,84888.59,134070.73,123002.37,-1293813.06,142192.89,-1436005.95,-1436005.95,3421955,493549,0.14
+m3,Ноябрь 2025,2750455,824441,1926014,,1687232.23,1064756.05,80032.22,529814.96,93016.59,6890.61,1551608.92,140523.55,86942.67,562034.22,104788.53,196043.72,25827.32,26196.57,244252.34,115529.6,-605528.75,115231.38,-720760.13,-719677.13,3403922,653467,0.19
+m3,Декабрь 2025,2821528,1090437,1731091,,1753222.89,1056006.7,88033.72,572208.47,99750.26,12880.27,1749327.2,177067.57,107201.15,604840.46,202933.43,308657.71,27267.92,71360.41,129177.55,118504.17,-800760.26,116527.08,-917287.34,-917287.34,3281996,460468,0.14
+m3,Январь 2026,2915534,1453478,1462056,,1644281.65,1116206.73,95528.59,408846.33,138861.26,11483.99,1855597.74,251677.41,87466.2,649978.7,297228.64,230670.37,27512.6,104837.02,118170.68,124493.32,-709913.71,102460.27,-812373.98,-812373.98,3376944,461410,0.14
+m3,Февраль 2026,2570303,1386462,1183841,,1391716.94,946480.78,79733.45,344002.71,88149.68,6002.15,1561348.2,261907.55,90311.99,654051.34,154848.78,103629.13,32577.02,40138.65,104177.99,109751.92,-494869.06,98149.81,-593018.87,-593018.87,2986600,416297,0.14
+m3,Март 2026,2695845,1323889,1371956,,1475707.73,990666.24,86410.77,375880.72,74446.1,9823.52,1579834.88,226878.34,126686.62,667974.98,101027.16,114500.9,28263.07,27668.6,109266.38,115112.54,-477068.15,95401.37,-572469.52,-572469.52,3123880,428035,0.14
+m3,Апрель 2026,3029475,1107659,1921816,,1747748.13,1148046.28,103471.96,461579.89,95685.86,10317.73,1500069.01,204054.65,149421.52,561545.86,221196.57,162552.12,27147.45,36147.21,90884.25,129358.62,-352425.76,119251.46,-471677.22,-471677.22,3737038,707563,0.19
+m3,Май 2026,3396920,1232281,2164639,,1811535.88,1196632.34,98584.01,512669.53,97297.58,6874.46,1485741.68,196757.37,132408.28,578330.63,184176.11,224481.1,28885.38,82569.4,,145048.51,-48131.07,126890.8,-175021.87,-175021.87,3894975,498055,0.13`;
+
+    const colors = {
+      teal: "#25b9c8",
+      green: "#21a67a",
+      red: "#e04767",
+      amber: "#f3a33a",
+      blue: "#5b8def",
+      violet: "#9a3d79",
+      steel: "#9aa8bc",
+      grid: "rgba(104,117,138,0.18)",
+      text: "#68758a",
+      zero: "rgba(154,61,121,0.38)"
+    };
+
+    const rows = csv.trim().split("\n").map((line, index) => {
+      const values = line.split(",");
+      if (index === 0) return values;
+      const headers = csv.trim().split("\n")[0].split(",");
+      return Object.fromEntries(headers.map((key, i) => {
+        const value = values[i];
+        return [key, i < 2 ? value : (value === "" ? 0 : Number(value))];
+      }));
+    }).slice(1);
+
+    const byBook = {
+      m1: rows.filter(row => row.book === "m1"),
+      m3: rows.filter(row => row.book === "m3")
+    };
+
+    const scenarioData = {"m1":{"periods":["Июль 2024","Август 2024","Сентябрь 2024","Октябрь 2024","Ноябрь 2024","Декабрь 2024","Январь 2025","Февраль 2025","Март 2025","Апрель 2025","Май 2025","Июнь 2025","Июль 2025","Август 2025","Сентябрь 2025","Октябрь 2025","Ноябрь 2025","Декабрь 2025","Январь 2026","Февраль 2026","Март 2026","Апрель 2026","Май 2026"],"articles":{"Аренда региональных офисов":[0,0,0,0,0,0,0,0,0,50000,0,0,0,0,0,0,0,0,0,0,0,0,0],"Текущий ремонт помещений":[0,0,0,0,0,6050,27174,110640,1455,1125.74,32286,70203.27,192784.44,71918,68407.4,30375.41,9801,5292,31393.79,41617.72,1000,0,23010.38],"Содержание отдела обслуживания":[19000,0,0,76600,0,0,0,0,57540,18479,0,125597,48286,37095.5,36230,51939,33805,66976,79876,67210,96045,50151,96231.07],"Ремонт и обслуживание прочего оборудования и инвентаря":[63314,8228.01,25710,21251.46,5682,0,11392,139239,22000,2500,117988.5,32596.9,77333,34998,202375.4,37885.2,103922.1,137190,72026.8,177357.5,57380,86852.59,139283],"Ремонт и обслуживание кофемашин":[0,0,0,0,0,60105.39,14893.52,0,0,0,28462.56,59255.43,12600,48388.54,0,40923.84,0,41301.77,0,4294.4,0,35807,8588.8],"Мебель для кухни":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,260440,0,0,0,0,0,0,0],"Оргтехника":[0,0,0,0,0,0,0,0,30998,0,0,124453.15,0,4662,0,17499.5,0,0,0,0,0,0,0],"Доставка материалов, инвентаря и мелкого оборудования, мебели и оргтехники":[2100,0,6012,0,5614,6979,2570,12195,5562,3150,15680,15690.08,24682,23419,1870,23838,9336,600,650,2037.5,2100,20485,7415],"Аренда оборудования, лизинг":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,173800,82500,95425,82500,95013,0,82500,82500,89025],"Услуги сайтов по трудоустройству и подбору персонала":[0,0,52000,77735,116293,39886,51339.43,21951.43,36845.59,7458.21,38627.64,96677.56,106527.76,80921.58,89079.84,90246.87,66241.78,20166.18,32620.91,49852.36,36047.57,53846.5,25791.5],"Транспортное обеспечение сотрудников":[9000,8935.06,59557.13,15243.8,27077.68,25819.76,33780.22,22943.4,32737.25,27694.6,31540.54,24822.62,5361.6,71770.52,54809,54805.3,1812,206972.57,42893.26,39070,34776.88,24563.36,29365.78],"Аренда жилья для сотрудников":[0,0,0,0,0,0,0,24380,24380,34240,0,0,0,0,0,0,0,134684,0,18834,0,0,0],"Командировки":[46284,0,5600,0,24589,0,7311,46249.5,20300,21700,43400,56840.5,38544,0,0,12405,0,66859.6,0,0,0,0,0],"Управление":[299626.17,346105.41,305188.26,322204.59,300796.23,350265.42,333954.13,313091.57,335558.79,363481.38,344914.79,345709.88,314067.44,316750.53,304886.48,314495.73,308002.14,336487.55,292636.46,244722.95,263914.23,262530.01,256191.07],"Оплата труда АУП":[122072.34,161029.19,152837.31,144954.31,127813.31,128484.31,137466.29,76304.32,141387.01,124755.32,122808,128890,162060,64589,145709,131325,81109,82017,0,0,0,0,0]}},"m3":{"periods":["Февраль 2025","Май 2025","Июнь 2025","Июль 2025","Август 2025","Сентябрь 2025","Октябрь 2025","Ноябрь 2025","Декабрь 2025","Январь 2026","Февраль 2026","Март 2026","Апрель 2026","Май 2026"],"articles":{"Аренда региональных офисов":[0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Текущий ремонт помещений":[0,0,16514.33,7174,2203.32,5810.12,0,10823,9216.24,15191.61,14,915,5392,0],"Содержание отдела обслуживания":[0,0,43998,48286,37095.5,36230,51938,33804,63974,79875,67210,45748,23830,32556.07],"Ремонт и обслуживание прочего оборудования и инвентаря":[0,3638.5,31251.9,4635,29721.65,6363.1,14126,-3500,28724,13255.8,82387.01,10560,45631.74,11826],"Ремонт и обслуживание кофемашин":[0,0,0,0,12912,0,12672,0,0,0,4294.4,0,0,0],"Мебель для кухни":[0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Оргтехника":[0,51798,253.15,0,67997,0,17499.5,0,0,0,0,0,0,0],"Доставка материалов, инвентаря и мелкого оборудования, мебели и оргтехники":[0,0,3567.5,11938,1812,2842,0,6946,200,30960,5989.5,1372,0,5696],"Аренда оборудования, лизинг":[0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Услуги сайтов по трудоустройству и подбору персонала":[0,67598.36,55158.44,83415.24,72829.42,66994.16,98451.13,82802.22,32770.05,47119.09,18694.64,48063.43,53846.5,25791.5],"Транспортное обеспечение сотрудников":[0,0,41086.4,2943.6,125516.64,117913.41,106525.3,0,20030.03,36573.49,33151,32171.64,75608.13,164415.72],"Аренда жилья для сотрудников":[0,0,0,0,0,0,438792,56500,147201,100659,18833,0,0,0],"Командировки":[9940.5,127342.3,105251.9,100191.6,0,24964,41654.1,0,46274,77044.4,0,0,0,0],"Управление":[0,45911.39,124258.04,161227.97,166533.11,121478.18,105508.89,93501.38,95896.08,102460.27,98149.81,95401.37,119251.46,126890.8],"Оплата труда АУП":[0,16226,40946,71931,25899,45704,36684,21730,20631,0,0,0,0,0]}}};
+
+    const bookNames = { m1: "М1", m3: "М3", both: "М1 + М3" };
+    const screenCopy = {
+      m1: {
+        title: "Полный анализ М1",
+        lead: "Помесячная динамика выручки, каналов продаж, чистой прибыли и расходов по точке М1."
+      },
+      m3: {
+        title: "Полный анализ М3",
+        lead: "Помесячная динамика выручки, каналов продаж, чистой прибыли и расходов по точке М3."
+      },
+      both: {
+        title: "Сравнение М1 + М3",
+        lead: "Сопоставление двух точек по месяцам: выручка, каналы продаж, чистая прибыль и структура расходов."
+      },
+      scenario: {
+        title: "Сценарий “что если”",
+        lead: "Помесячный эффект от исключения выбранных статей затрат из расчета чистой прибыли."
+      },
+      memo: {
+        title: "Аналитическая записка",
+        lead: "Выводы и рекомендации по соотношению динамики выручки и расходов."
+      }
+    };
+    const expenseDefs = [
+      ["cogs", "Себестоимость всего", "Себестоимость"],
+      ["prod", "Продукты", "Себестоимость"],
+      ["pack", "Упаковка", "Себестоимость"],
+      ["kitch", "Кухня / производство", "Себестоимость"],
+      ["ploss", "Потери продукции", "Себестоимость"],
+      ["wloss", "Списания / потери", "Себестоимость"],
+      ["exp", "Операционные расходы всего", "Операционные"],
+      ["delExp", "Расходы на доставку", "Операционные"],
+      ["mkt", "Маркетинг", "Операционные"],
+      ["prem", "Премии / мотивация", "Операционные"],
+      ["mat", "Материалы", "Операционные"],
+      ["emp", "Персонал", "Операционные"],
+      ["bank", "Банк / эквайринг", "Операционные"],
+      ["other", "Прочие расходы", "Операционные"],
+      ["taxes", "Налоги", "Прочее"],
+      ["roy", "Роялти", "Прочее"],
+      ["netMgmt", "Управление / сеть", "Прочее"]
+    ];
+    const dashboardTitle = document.querySelector("#dashboardTitle");
+    const dashboardLead = document.querySelector("#dashboardLead");
+    const tabButtons = Array.from(document.querySelectorAll(".tab-btn"));
+    const fromPeriod = document.querySelector("#fromPeriod");
+    const toPeriod = document.querySelector("#toPeriod");
+    const analysisSections = Array.from(document.querySelectorAll(".analysis-section"));
+    const scenarioSection = document.querySelector("#scenario");
+    const memoSection = document.querySelector("#memo");
+    const scenarioBook = document.querySelector("#scenarioBook");
+    const scenarioTableWrap = document.querySelector("#scenarioTableWrap");
+    const scenarioScrollbar = document.querySelector("#scenarioScrollbar");
+    const scenarioScrollbarInner = document.querySelector("#scenarioScrollbarInner");
+    const scenarioHead = document.querySelector("#scenarioHead");
+    const scenarioBody = document.querySelector("#scenarioBody");
+    const scenarioSummary = document.querySelector("#scenarioSummary");
+    const scenarioArticles = Object.keys(scenarioData.m1.articles);
+    const periodsByBook = {
+      m1: byBook.m1.map(row => row.period),
+      m3: byBook.m3.map(row => row.period)
+    };
+    const allPeriods = periodsByBook.m1;
+    const numericKeys = Object.keys(rows[0]).filter(key => !["book", "period"].includes(key));
+    let activeTab = "m1";
+    let lastAnalysisTab = "m1";
+    let checkedScenarioArticles = new Set(scenarioArticles);
+
+    function formatMoney(value) {
+      const abs = Math.abs(value);
+      if (abs >= 1000000) return `${(value / 1000000).toLocaleString("ru-RU", { maximumFractionDigits: 1 })} млн`;
+      if (abs >= 1000) return `${Math.round(value / 1000).toLocaleString("ru-RU")} тыс`;
+      return `${Math.round(value).toLocaleString("ru-RU")}`;
+    }
+
+    function formatFull(value) {
+      return `${Math.round(value).toLocaleString("ru-RU")}`;
+    }
+
+    function formatPct(value) {
+      if (!Number.isFinite(value)) return "0%";
+      return `${(value * 100).toLocaleString("ru-RU", { maximumFractionDigits: 1 })}%`;
+    }
+
+    function availablePeriods() {
+      if (activeTab === "memo") return allPeriods;
+      if (activeTab === "scenario") {
+        return allPeriods;
+      }
+      return allPeriods;
+    }
+
+    function rangeLabel(range) {
+      return range.length === 1 ? range[0] : `${range[0]} - ${range.at(-1)}`;
+    }
+
+    function aggregate(items, period, book) {
+      const result = { period, book };
+      numericKeys.forEach(key => {
+        result[key] = items.reduce((sum, row) => sum + (Number(row[key]) || 0), 0);
+      });
+      result.discRate = result.gross ? result.disc / result.gross : 0;
+      return result;
+    }
+
+    function seriesFor(bookIds, range) {
+      return range.map(period => {
+        const items = bookIds.flatMap(id => byBook[id].filter(row => row.period === period));
+        if (items.length) return aggregate(items, period, bookIds.length > 1 ? "both" : bookIds[0]);
+        return aggregate([], period, bookIds.length > 1 ? "both" : bookIds[0]);
+      });
+    }
+
+    function delta(current, previous, invert = false) {
+      if (!previous || !Number.isFinite(previous) || previous === 0) return { text: "нет базы", cls: "neutral" };
+      const value = (current - previous) / Math.abs(previous);
+      const good = invert ? current <= previous : current >= previous;
+      return {
+        text: `${value >= 0 ? "+" : ""}${formatPct(value)} MoM`,
+        cls: good ? "good" : "bad"
+      };
+    }
+
+    function selected() {
+      const periods = availablePeriods();
+      let start = periods.indexOf(fromPeriod.value);
+      let end = periods.indexOf(toPeriod.value);
+      if (start < 0) start = periods.length - 1;
+      if (end < 0) end = periods.length - 1;
+      if (start > end) {
+        [start, end] = [end, start];
+        fromPeriod.value = periods[start];
+        toPeriod.value = periods[end];
+      }
+
+      const range = periods.slice(start, end + 1);
+      const books = activeTab === "both" ? ["m1", "m3"] : [activeTab];
+      const seriesByBook = Object.fromEntries(books.map(id => [id, seriesFor([id], range)]));
+      const combined = books.length > 1 ? seriesFor(books, range) : seriesByBook[books[0]];
+      return { books, seriesByBook, combined, range };
+    }
+
+    function fillPeriodSelects(preserve = true) {
+      const periods = availablePeriods();
+      const oldFrom = fromPeriod.value;
+      const oldTo = toPeriod.value;
+      fromPeriod.innerHTML = "";
+      toPeriod.innerHTML = "";
+      periods.forEach(period => {
+        fromPeriod.add(new Option(period, period));
+        toPeriod.add(new Option(period, period));
+      });
+      fromPeriod.value = preserve && periods.includes(oldFrom) ? oldFrom : periods.at(-1);
+      toPeriod.value = preserve && periods.includes(oldTo) ? oldTo : periods.at(-1);
+    }
+
+    function setActiveTab(tab, preserve = true) {
+      activeTab = tab;
+      if (["m1", "m3", "both"].includes(activeTab)) lastAnalysisTab = activeTab;
+      tabButtons.forEach(button => {
+        button.setAttribute("aria-selected", button.dataset.tab === activeTab ? "true" : "false");
+      });
+      fillPeriodSelects(preserve);
+      render();
+    }
+    window.setActiveTab = setActiveTab;
+
+    function updateScreenIntro() {
+      const copy = screenCopy[activeTab] || screenCopy.m1;
+      dashboardTitle.textContent = copy.title;
+      dashboardLead.textContent = copy.lead;
+    }
+
+    function lastPair(series) {
+      return { current: series.at(-1), previous: series.length > 1 ? series.at(-2) : null };
+    }
+
+    function rowsForRange(book, range) {
+      return range.map(period => byBook[book].find(row => row.period === period)).filter(Boolean);
+    }
+
+    function drawPeriodSummary(state) {
+      const m1Rows = rowsForRange("m1", state.range);
+      const m3Rows = rowsForRange("m3", state.range);
+      const revenue = sumRows(state.combined, "r");
+      const net = sumRows(state.combined, "net");
+      const m1Revenue = sumRows(m1Rows, "r");
+      const m3Revenue = sumRows(m3Rows, "r");
+      const m1Margin = m1Revenue ? formatPct(sumRows(m1Rows, "net") / m1Revenue) : "нет данных";
+      const m3Margin = m3Revenue ? formatPct(sumRows(m3Rows, "net") / m3Revenue) : "нет данных";
+      const prefix = state.books.length > 1 ? "Консолидированная" : bookNames[state.books[0]];
+
+      document.querySelector("#periodSummary").innerHTML = [
+        [`${prefix} выручка за период`, formatFull(revenue)],
+        [`${prefix} чистая прибыль за период`, formatFull(net)],
+        ["Маржа М1 / М3", `${m1Margin} / ${m3Margin}`]
+      ].map(([title, value]) => `
+        <article class="period-card">
+          <span>${title}</span>
+          <strong>${value}</strong>
+        </article>
+      `).join("");
+    }
+
+    function drawCards(state) {
+      let cards;
+      if (state.books.length === 1) {
+        const { current, previous } = lastPair(state.combined);
+        const topChannel = [
+          ["Доставка", current.d],
+          ["Ресторан", current.rest],
+          ["Самовывоз", current.pick]
+        ].sort((a, b) => b[1] - a[1])[0];
+        cards = [
+          ["Месяц", current.period, { text: bookNames[current.book], cls: "neutral" }, false, true],
+          ["Выручка", current.r, delta(current.r, previous?.r)],
+          ["Чистая прибыль", current.net, delta(current.net, previous?.net)],
+          ["Расходы", current.exp, delta(current.exp, previous?.exp, true)],
+          ["Канал-лидер", topChannel[0], { text: formatPct(topChannel[1] / current.r), cls: "neutral" }, false, true],
+          ["Маржа прибыли", current.net / current.r, delta(current.net / current.r, previous ? previous.net / previous.r : 0), true]
+        ];
+      } else {
+        const m1 = lastPair(state.seriesByBook.m1);
+        const m3 = lastPair(state.seriesByBook.m3);
+        cards = [
+          ["М1 выручка", m1.current.r, delta(m1.current.r, m1.previous?.r)],
+          ["М3 выручка", m3.current.r, delta(m3.current.r, m3.previous?.r)],
+          ["М1 прибыль", m1.current.net, delta(m1.current.net, m1.previous?.net)],
+          ["М3 прибыль", m3.current.net, delta(m3.current.net, m3.previous?.net)],
+          ["М1 расходы", m1.current.exp, delta(m1.current.exp, m1.previous?.exp, true)],
+          ["М3 расходы", m3.current.exp, delta(m3.current.exp, m3.previous?.exp, true)]
+        ];
+      }
+
+      document.querySelector("#cards").innerHTML = cards.map(([title, value, change, isPct, isText]) => `
+        <article class="card">
+          <span>${title}</span>
+          <strong>${isText ? value : (isPct ? formatPct(value) : formatMoney(value))}</strong>
+          <div class="delta ${change.cls}">${change.text}</div>
+        </article>
+      `).join("");
+    }
+
+    function setSvg(svg, width, height, content) {
+      svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+      svg.innerHTML = content;
+    }
+
+    function scale(value, min, max, start, end) {
+      if (max === min) return (start + end) / 2;
+      return start + ((value - min) / (max - min)) * (end - start);
+    }
+
+    function pathFor(data, key, x, y) {
+      return data.map((row, i) => `${i ? "L" : "M"}${x(i)},${y(row[key])}`).join(" ");
+    }
+
+    function labelMonth(period) {
+      return period.replace(" 20", " ");
+    }
+
+    function tooltipRows(items) {
+      return items.filter(item => item.value !== undefined && item.value !== null).map(item => `
+        <span class="tip-row">
+          <span class="tip-name" style="color:${item.color || colors.text}">${item.name}</span>
+          <b>${formatFull(item.value)}</b>
+        </span>
+      `).join("");
+    }
+
+    function bindChartTooltip(svg, width, xMin, xMax, count, htmlForIndex) {
+      const host = svg.closest(".viz") || svg.parentElement;
+      let tooltip = host.querySelector(".chart-tooltip");
+      if (!tooltip) {
+        tooltip = document.createElement("div");
+        tooltip.className = "chart-tooltip";
+        host.appendChild(tooltip);
+      }
+
+      svg.onmousemove = event => {
+        if (!count) return;
+        const rect = svg.getBoundingClientRect();
+        const hostRect = host.getBoundingClientRect();
+        const svgX = ((event.clientX - rect.left) / rect.width) * width;
+        const raw = scale(svgX, xMin, xMax, 0, Math.max(1, count - 1));
+        const index = Math.max(0, Math.min(count - 1, Math.round(raw)));
+        tooltip.innerHTML = htmlForIndex(index);
+        tooltip.style.left = `${event.clientX - hostRect.left}px`;
+        tooltip.style.top = `${event.clientY - hostRect.top}px`;
+        tooltip.classList.add("is-visible");
+      };
+
+      svg.onmouseleave = () => tooltip.classList.remove("is-visible");
+    }
+
+    function drawLineChart(svg, lines, key, captionEl, caption) {
+      const w = 860, h = 300, l = 54, r = 18, t = 24, b = 42;
+      const base = lines[0]?.data || [];
+      const values = lines.flatMap(line => line.data.map(row => row[key]));
+      const min = Math.min(0, ...values);
+      const max = Math.max(...values);
+      const x = i => scale(i, 0, Math.max(1, base.length - 1), l, w - r);
+      const y = v => scale(v, min, max, h - b, t);
+      const grid = [0, 0.25, 0.5, 0.75, 1].map(p => {
+        const gy = t + (h - b - t) * p;
+        const val = max - (max - min) * p;
+        return `<line x1="${l}" y1="${gy}" x2="${w - r}" y2="${gy}" stroke="${colors.grid}"/><text x="8" y="${gy + 4}" font-size="11" fill="${colors.text}">${formatMoney(val)}</text>`;
+      }).join("");
+      const labels = base.map((row, i) => i % Math.ceil(base.length / 6) === 0 || i === base.length - 1
+        ? `<text x="${x(i)}" y="${h - 13}" text-anchor="middle" font-size="11" fill="${colors.text}">${labelMonth(row.period)}</text>` : "").join("");
+      const zero = y(0);
+      const paths = lines.map(line => `<path d="${pathFor(line.data, key, x, y)}" fill="none" stroke="${line.color}" stroke-width="3" filter="drop-shadow(0 0 5px ${line.color})"/>`).join("");
+      const dots = lines.map(line => line.data.map((row, i) => `
+        <circle cx="${x(i)}" cy="${y(row[key])}" r="3.5" fill="${line.color}">
+          <title>${line.name}, ${row.period}: ${formatFull(row[key])}</title>
+        </circle>
+      `).join("")).join("");
+      captionEl.textContent = caption;
+
+      setSvg(svg, w, h, `
+        ${grid}
+        <line x1="${l}" y1="${zero}" x2="${w - r}" y2="${zero}" stroke="${colors.zero}" stroke-dasharray="4 4"/>
+        ${paths}
+        ${dots}
+        ${labels}
+      `);
+      bindChartTooltip(svg, w, l, w - r, base.length, index => {
+        const period = base[index]?.period || "";
+        const rows = lines.map(line => {
+          const row = line.data[index];
+          return { name: line.name, color: line.color, value: row?.[key] };
+        });
+        return `<strong>${period}</strong>${tooltipRows(rows)}`;
+      });
+    }
+
+    function trendValues(data, key) {
+      const n = data.length;
+      if (n <= 1) return data.map(row => row[key]);
+      const sumX = data.reduce((sum, _, i) => sum + i, 0);
+      const sumY = data.reduce((sum, row) => sum + row[key], 0);
+      const sumXY = data.reduce((sum, row, i) => sum + i * row[key], 0);
+      const sumXX = data.reduce((sum, _, i) => sum + i * i, 0);
+      const slope = (n * sumXY - sumX * sumY) / ((n * sumXX - sumX * sumX) || 1);
+      const intercept = (sumY - slope * sumX) / n;
+      return data.map((_, i) => intercept + slope * i);
+    }
+
+    function drawBarTrendChart(svg, lines, key, captionEl, caption) {
+      const w = 860, h = 300, l = 54, r = 18, t = 24, b = 42;
+      const base = lines[0]?.data || [];
+      const trends = lines.map(line => ({ ...line, trend: trendValues(line.data, key) }));
+      const values = [
+        ...lines.flatMap(line => line.data.map(row => row[key])),
+        ...trends.flatMap(line => line.trend)
+      ];
+      const min = Math.min(0, ...values);
+      const max = Math.max(0, ...values);
+      const y = value => scale(value, min, max, h - b, t);
+      const slot = (w - l - r) / Math.max(1, base.length);
+      const groupWidth = Math.min(54, slot * 0.72);
+      const barWidth = Math.max(8, Math.min(30, (groupWidth - Math.max(0, lines.length - 1) * 5) / Math.max(1, lines.length)));
+      const monthX = i => l + i * slot + slot / 2;
+      const trendX = i => scale(i, 0, Math.max(1, base.length - 1), l + slot / 2, w - r - slot / 2);
+      const zero = y(0);
+      const grid = [0, 0.25, 0.5, 0.75, 1].map(p => {
+        const gy = t + (h - b - t) * p;
+        const val = max - (max - min) * p;
+        return `<line x1="${l}" y1="${gy}" x2="${w - r}" y2="${gy}" stroke="${colors.grid}"/><text x="8" y="${gy + 4}" font-size="11" fill="${colors.text}">${formatMoney(val)}</text>`;
+      }).join("");
+      const labels = base.map((row, i) => i % Math.ceil(base.length / 6) === 0 || i === base.length - 1
+        ? `<text x="${monthX(i)}" y="${h - 13}" text-anchor="middle" font-size="11" fill="${colors.text}">${labelMonth(row.period)}</text>` : "").join("");
+      const bars = base.map((_, i) => {
+        const startX = monthX(i) - ((lines.length * barWidth) + ((lines.length - 1) * 5)) / 2;
+        return lines.map((line, j) => {
+          const value = line.data[i]?.[key] || 0;
+          const yValue = y(value);
+          const x = startX + j * (barWidth + 5);
+          return `<rect x="${x}" y="${Math.min(yValue, zero)}" width="${barWidth}" height="${Math.max(1, Math.abs(zero - yValue))}" rx="5" fill="${line.color}" opacity="0.38">
+            <title>${line.name}, ${base[i]?.period}: ${formatFull(value)}</title>
+          </rect>`;
+        }).join("");
+      }).join("");
+      const paths = trends.map(line => {
+        const d = line.trend.map((value, i) => `${i ? "L" : "M"}${trendX(i)},${y(value)}`).join(" ");
+        return `<path d="${d}" fill="none" stroke="${line.color}" stroke-width="3.2" stroke-linecap="round"/>`;
+      }).join("");
+
+      captionEl.textContent = caption;
+      setSvg(svg, w, h, `
+        ${grid}
+        <line x1="${l}" y1="${zero}" x2="${w - r}" y2="${zero}" stroke="${colors.zero}" stroke-dasharray="4 4"/>
+        ${bars}
+        ${paths}
+        ${labels}
+      `);
+      bindChartTooltip(svg, w, l, w - r, base.length, index => {
+        const period = base[index]?.period || "";
+        const rows = lines.map(line => {
+          const row = line.data[index];
+          return { name: line.name, color: line.color, value: row?.[key] };
+        });
+        return `<strong>${period}</strong>${tooltipRows(rows)}`;
+      });
+    }
+
+    function chartLines(state, singleColor, compareColors) {
+      if (state.books.length === 1) {
+        const id = state.books[0];
+        return [{ name: bookNames[id], data: state.seriesByBook[id], color: singleColor }];
+      }
+      return [
+        { name: "М1", data: state.seriesByBook.m1, color: compareColors[0] },
+        { name: "М3", data: state.seriesByBook.m3, color: compareColors[1] }
+      ];
+    }
+
+    function drawChannels(state) {
+      const svg = document.querySelector("#channelChart");
+      const w = 860, h = 330, l = 44, r = 18, t = 24, b = 54;
+      const channelDefs = [
+        ["d", "Доставка", colors.teal],
+        ["rest", "Ресторан", colors.blue],
+        ["pick", "Самовывоз", colors.amber]
+      ];
+      const base = state.books.length === 1 ? state.combined : state.seriesByBook.m1;
+      const allRows = state.books.flatMap(id => state.seriesByBook[id]);
+      const max = Math.max(...allRows.map(row => row.d + row.rest + row.pick));
+      const y = value => scale(value, 0, max, h - b, t);
+      const slot = (w - l - r) / base.length;
+      const groupWidth = state.books.length === 1 ? Math.min(38, slot * 0.58) : Math.min(24, slot * 0.34);
+      const bars = base.map((_, i) => {
+        const monthX = l + i * slot + slot / 2;
+        const monthRows = state.books.map(id => state.seriesByBook[id][i]).filter(Boolean);
+        const monthBars = monthRows.map((row, j) => {
+          const x = monthX - ((monthRows.length * groupWidth) + ((monthRows.length - 1) * 5)) / 2 + j * (groupWidth + 5);
+          let topValue = 0;
+          const stacks = channelDefs.map(([key, name, color]) => {
+            const y1 = y(topValue + row[key]);
+            const y2 = y(topValue);
+            topValue += row[key];
+            return `<rect x="${x}" y="${y1}" width="${groupWidth}" height="${Math.max(1, y2 - y1)}" fill="${color}">
+              <title>${bookNames[row.book]}, ${row.period}, ${name}: ${formatFull(row[key])}</title>
+            </rect>`;
+          }).join("");
+          const pointLabel = state.books.length > 1 ? `<text x="${x + groupWidth / 2}" y="${h - 33}" text-anchor="middle" font-size="10" fill="${colors.text}">${row.book.toUpperCase()}</text>` : "";
+          return stacks + pointLabel;
+        }).join("");
+        const label = i % Math.ceil(base.length / 6) === 0 || i === base.length - 1
+          ? `<text x="${monthX}" y="${h - 13}" text-anchor="middle" font-size="11" fill="${colors.text}">${labelMonth(base[i].period)}</text>` : "";
+        return monthBars + label;
+      }).join("");
+      const grid = [0, 0.5, 1].map(p => {
+        const gy = t + (h - b - t) * p;
+        const val = max - max * p;
+        return `<line x1="${l}" y1="${gy}" x2="${w - r}" y2="${gy}" stroke="${colors.grid}"/><text x="4" y="${gy + 4}" font-size="11" fill="${colors.text}">${formatMoney(val)}</text>`;
+      }).join("");
+      document.querySelector("#channelCaption").textContent = `${rangeLabel(state.range)}: помесячная структура выручки по каналам`;
+      setSvg(svg, w, h, `${grid}${bars}`);
+      bindChartTooltip(svg, w, l, w - r, base.length, index => {
+        const period = base[index]?.period || "";
+        const rows = state.books.flatMap(id => {
+          const row = state.seriesByBook[id][index];
+          if (!row) return [];
+          return channelDefs.map(([key, name, color]) => ({
+            name: `${bookNames[id]} · ${name}`,
+            color,
+            value: row[key]
+          }));
+        });
+        return `<strong>${period}</strong>${tooltipRows(rows)}`;
+      });
+    }
+
+    function drawExpenses(state) {
+      const svg = document.querySelector("#expenseChart");
+      const legend = document.querySelector("#costs .legend");
+      if (state.books.length === 1) {
+        legend.innerHTML = `
+          <span class="key"><i class="swatch" style="background: var(--red)"></i>Операционные расходы</span>`;
+        drawLineChart(svg, [
+          { name: "Операционные расходы", data: state.combined, color: colors.red }
+        ], "exp", document.querySelector("#expenseCaption"), `${rangeLabel(state.range)}: расходы по месяцам`);
+      } else {
+        legend.innerHTML = `
+          <span class="key"><i class="swatch" style="background: var(--red)"></i>М1 расходы</span>
+          <span class="key"><i class="swatch" style="background: var(--blue)"></i>М3 расходы</span>`;
+        drawLineChart(svg, chartLines(state, colors.red, [colors.red, colors.blue]), "exp", document.querySelector("#expenseCaption"), `${rangeLabel(state.range)}: сравнение операционных расходов`);
+      }
+    }
+
+    function sumRows(series, key) {
+      return series.reduce((sum, row) => sum + (Number(row[key]) || 0), 0);
+    }
+
+    function expenseBar(value, max) {
+      const width = max ? Math.min(100, Math.abs(value) / max * 100) : 0;
+      return `
+        <div class="expense-bar" aria-hidden="true">
+          <div class="expense-bar-track"><div class="expense-bar-fill" style="width:${width}%"></div></div>
+        </div>
+      `;
+    }
+
+    function groupedExpenseRows(colspan, rowHtml) {
+      let currentGroup = "";
+      return expenseDefs.map(def => {
+        const group = def[2];
+        const header = group !== currentGroup ? `<tr class="group-row"><td colspan="${colspan}">${group}</td></tr>` : "";
+        currentGroup = group;
+        return header + rowHtml(def);
+      }).join("");
+    }
+
+    function drawExpenseStructure(state) {
+      const caption = document.querySelector("#expenseStructureCaption");
+      const summary = document.querySelector("#expenseSummary");
+      const head = document.querySelector("#expenseStructureHead");
+      const body = document.querySelector("#expenseStructureBody");
+      const table = document.querySelector("#expenseStructureTable");
+
+      caption.textContent = `${rangeLabel(state.range)}: структура расходов и себестоимости по месяцам выбранного анализа`;
+
+      if (state.books.length === 1) {
+        const series = state.combined;
+        const { current, previous } = lastPair(series);
+        const revenue = sumRows(series, "r");
+        const cogs = sumRows(series, "cogs");
+        const opExp = sumRows(series, "exp");
+        const net = sumRows(series, "net");
+        const maxTotal = Math.max(...expenseDefs.map(([key]) => Math.abs(sumRows(series, key))));
+
+        summary.innerHTML = [
+          ["Выручка периода", formatMoney(revenue), `${series.length} мес.`],
+          ["Себестоимость", formatMoney(cogs), `${formatPct(cogs / revenue)} от выручки`],
+          ["Опер. расходы", formatMoney(opExp), `${formatPct(opExp / revenue)} от выручки`],
+          ["ЧП периода", formatMoney(net), `${formatPct(net / revenue)} маржа`]
+        ].map(([title, value, note]) => `
+          <div class="expense-card">
+            <span>${title}</span>
+            <strong>${value}</strong>
+            <em>${note}</em>
+          </div>
+        `).join("");
+
+        table.style.minWidth = "920px";
+        head.innerHTML = `
+          <tr>
+            <th>Статья</th>
+            <th>Последний месяц</th>
+            <th>Итого за период</th>
+            <th>Доля выручки</th>
+            <th>MoM</th>
+            <th>Вклад</th>
+          </tr>
+        `;
+        body.innerHTML = groupedExpenseRows(6, ([key, name]) => {
+          const total = sumRows(series, key);
+          const mom = delta(current[key], previous?.[key], true);
+          return `
+            <tr>
+              <td>${name}</td>
+              <td>${formatFull(current[key])}</td>
+              <td>${formatFull(total)}</td>
+              <td>${formatPct(total / revenue)}</td>
+              <td class="delta ${mom.cls}">${mom.text}</td>
+              <td>${expenseBar(total, maxTotal)}</td>
+            </tr>
+          `;
+        });
+        return;
+      }
+
+      const m1Series = state.seriesByBook.m1;
+      const m3Series = state.seriesByBook.m3;
+      const m1 = lastPair(m1Series).current;
+      const m3 = lastPair(m3Series).current;
+      const m1Revenue = sumRows(m1Series, "r");
+      const m3Revenue = sumRows(m3Series, "r");
+      const m1Exp = sumRows(m1Series, "exp");
+      const m3Exp = sumRows(m3Series, "exp");
+      const m1Net = sumRows(m1Series, "net");
+      const m3Net = sumRows(m3Series, "net");
+
+      summary.innerHTML = [
+        ["М1 опер. расходы", formatMoney(m1Exp), `${formatPct(m1Exp / m1Revenue)} от выручки`],
+        ["М3 опер. расходы", formatMoney(m3Exp), `${formatPct(m3Exp / m3Revenue)} от выручки`],
+        ["М1 ЧП периода", formatMoney(m1Net), `${formatPct(m1Net / m1Revenue)} маржа`],
+        ["М3 ЧП периода", formatMoney(m3Net), `${formatPct(m3Net / m3Revenue)} маржа`]
+      ].map(([title, value, note]) => `
+        <div class="expense-card">
+          <span>${title}</span>
+          <strong>${value}</strong>
+          <em>${note}</em>
+        </div>
+      `).join("");
+
+      table.style.minWidth = "1080px";
+      head.innerHTML = `
+        <tr>
+          <th>Статья</th>
+          <th>М1 последний</th>
+          <th>М3 последний</th>
+          <th>М1 период</th>
+          <th>М3 период</th>
+          <th>Разница периода</th>
+          <th>Доля М1</th>
+          <th>Доля М3</th>
+        </tr>
+      `;
+      body.innerHTML = groupedExpenseRows(8, ([key, name]) => {
+        const m1Total = sumRows(m1Series, key);
+        const m3Total = sumRows(m3Series, key);
+        return `
+          <tr>
+            <td>${name}</td>
+            <td>${formatFull(m1[key])}</td>
+            <td>${formatFull(m3[key])}</td>
+            <td>${formatFull(m1Total)}</td>
+            <td>${formatFull(m3Total)}</td>
+            <td class="delta ${m1Total >= m3Total ? "bad" : "good"}">${formatFull(m1Total - m3Total)}</td>
+            <td>${formatPct(m1Total / m1Revenue)}</td>
+            <td>${formatPct(m3Total / m3Revenue)}</td>
+          </tr>
+        `;
+      });
+    }
+
+    function drawMonthlyTable(state) {
+      const head = document.querySelector("#monthlyHead");
+      const body = document.querySelector("#monthlyTable");
+      const table = document.querySelector("#monthlyTableWrap");
+
+      if (state.books.length > 1) {
+        table.style.minWidth = "820px";
+        head.innerHTML = `
+          <tr>
+            <th rowspan="2">Месяц</th>
+            <th colspan="2">Выручка</th>
+            <th colspan="2">ЧП</th>
+            <th colspan="2">Расходы</th>
+          </tr>
+          <tr>
+            <th>М1</th>
+            <th>М3</th>
+            <th>М1</th>
+            <th>М3</th>
+            <th>М1</th>
+            <th>М3</th>
+          </tr>
+        `;
+
+        const rowsHtml = state.range.map((period, i) => {
+          const m1 = state.seriesByBook.m1[i];
+          const m3 = state.seriesByBook.m3[i];
+          return `
+            <tr>
+              <td>${period}</td>
+              <td>${formatFull(m1.r)}</td>
+              <td>${formatFull(m3.r)}</td>
+              <td class="delta ${m1.net >= 0 ? "good" : "bad"}">${formatFull(m1.net)}</td>
+              <td class="delta ${m3.net >= 0 ? "good" : "bad"}">${formatFull(m3.net)}</td>
+              <td>${formatFull(m1.exp)}</td>
+              <td>${formatFull(m3.exp)}</td>
+            </tr>
+          `;
+        }).join("");
+        const m1Rows = state.seriesByBook.m1;
+        const m3Rows = state.seriesByBook.m3;
+        body.innerHTML = rowsHtml + `
+          <tr class="total-row">
+            <td>Итого за период</td>
+            <td>${formatFull(sumRows(m1Rows, "r"))}</td>
+            <td>${formatFull(sumRows(m3Rows, "r"))}</td>
+            <td>${formatFull(sumRows(m1Rows, "net"))}</td>
+            <td>${formatFull(sumRows(m3Rows, "net"))}</td>
+            <td>${formatFull(sumRows(m1Rows, "exp"))}</td>
+            <td>${formatFull(sumRows(m3Rows, "exp"))}</td>
+          </tr>
+        `;
+        return;
+      }
+
+      table.style.minWidth = "620px";
+      head.innerHTML = `
+        <tr>
+          <th>Месяц</th>
+          <th>Точка</th>
+          <th>Выручка</th>
+          <th>Чистая прибыль</th>
+          <th>Расходы</th>
+          <th>Каналы</th>
+        </tr>
+      `;
+
+      const rows = state.books.flatMap(id => state.seriesByBook[id]);
+      body.innerHTML = rows.map(row => `
+          <tr>
+            <td>${row.period}</td>
+            <td>${bookNames[row.book]}</td>
+            <td>${formatFull(row.r)}</td>
+            <td class="delta ${row.net >= 0 ? "good" : "bad"}">${formatFull(row.net)}</td>
+            <td>${formatFull(row.exp)}</td>
+            <td>${formatPct(row.d / row.r)} / ${formatPct(row.rest / row.r)}</td>
+          </tr>
+        `).join("") + `
+          <tr class="total-row">
+            <td>Итого за период</td>
+            <td>${state.books.map(id => bookNames[id]).join(" + ")}</td>
+            <td>${formatFull(sumRows(rows, "r"))}</td>
+            <td>${formatFull(sumRows(rows, "net"))}</td>
+            <td>${formatFull(sumRows(rows, "exp"))}</td>
+            <td>${formatPct(sumRows(rows, "d") / sumRows(rows, "r"))} / ${formatPct(sumRows(rows, "rest") / sumRows(rows, "r"))}</td>
+          </tr>
+        `;
+    }
+
+    function scenarioBooks() {
+      return scenarioBook.value === "both" ? ["m1", "m3"] : [scenarioBook.value];
+    }
+
+    function scenarioValue(article, period) {
+      return scenarioBooks().reduce((sum, book) => {
+        const index = scenarioData[book].periods.indexOf(period);
+        return sum + (index >= 0 ? scenarioData[book].articles[article][index] || 0 : 0);
+      }, 0);
+    }
+
+    function scenarioNet(period) {
+      return scenarioBooks().reduce((sum, book) => {
+        const row = byBook[book].find(item => item.period === period);
+        return sum + (row?.net || 0);
+      }, 0);
+    }
+
+    function scenarioRevenue(period) {
+      return scenarioBooks().reduce((sum, book) => {
+        const row = byBook[book].find(item => item.period === period);
+        return sum + (row?.r || 0);
+      }, 0);
+    }
+
+    function scenarioExpenses(period) {
+      return scenarioBooks().reduce((sum, book) => {
+        const row = byBook[book].find(item => item.period === period);
+        return sum + (row?.exp || 0);
+      }, 0);
+    }
+
+    function selectedScenarioRange() {
+      const periods = availablePeriods();
+      let start = periods.indexOf(fromPeriod.value);
+      let end = periods.indexOf(toPeriod.value);
+      if (start < 0) start = periods.length - 1;
+      if (end < 0) end = periods.length - 1;
+      if (start > end) {
+        [start, end] = [end, start];
+        fromPeriod.value = periods[start];
+        toPeriod.value = periods[end];
+      }
+      return periods.slice(start, end + 1);
+    }
+
+    function drawScenario() {
+      const range = selectedScenarioRange();
+      const selectedArticles = scenarioArticles.filter(article => checkedScenarioArticles.has(article));
+      const totalByPeriod = range.map(period => selectedArticles.reduce((sum, article) => sum + scenarioValue(article, period), 0));
+      const netByPeriod = range.map(period => scenarioNet(period));
+      const revenueByPeriod = range.map(period => scenarioRevenue(period));
+      const expensesByPeriod = range.map(period => scenarioExpenses(period));
+      const articleRows = scenarioArticles.map(article => {
+        const values = range.map(period => scenarioValue(article, period));
+        return {
+          article,
+          values,
+          rowTotal: values.reduce((sum, value) => sum + value, 0)
+        };
+      }).sort((a, b) => b.rowTotal - a.rowTotal || a.article.localeCompare(b.article, "ru"));
+      const potentialNetByPeriod = netByPeriod.map((value, index) => value + totalByPeriod[index]);
+      const total = totalByPeriod.reduce((sum, value) => sum + value, 0);
+      const netTotal = netByPeriod.reduce((sum, value) => sum + value, 0);
+      const revenueTotal = revenueByPeriod.reduce((sum, value) => sum + value, 0);
+      const expensesTotal = expensesByPeriod.reduce((sum, value) => sum + value, 0);
+      const potentialExpensesTotal = expensesTotal - total;
+      const potentialNetTotal = potentialNetByPeriod.reduce((sum, value) => sum + value, 0);
+      const growth = netTotal ? total / Math.abs(netTotal) : 0;
+      const newMargin = revenueTotal ? potentialNetTotal / revenueTotal : 0;
+
+      scenarioSummary.innerHTML = [
+        ["Выбрано статей", `${selectedArticles.length} из ${scenarioArticles.length}`],
+        ["Потенциальный эффект", formatMoney(total)],
+        ["Среднемесячно", formatMoney(range.length ? total / range.length : 0)]
+      ].map(([title, value]) => `
+        <div class="scenario-mini">
+          <span>${title}</span>
+          <strong>${value}</strong>
+        </div>
+      `).join("");
+
+      scenarioHead.innerHTML = `
+        <tr>
+          <th>Статья затрат</th>
+          ${range.map(period => `<th>${labelMonth(period)}</th>`).join("")}
+          <th>Итого</th>
+        </tr>
+      `;
+
+      scenarioBody.innerHTML = `
+        <tr class="scenario-net">
+          <td>Чистая прибыль</td>
+          ${netByPeriod.map(value => `<td>${formatFull(value)}</td>`).join("")}
+          <td>${formatFull(netTotal)}</td>
+        </tr>
+      ` + articleRows.map(({ article, values, rowTotal }) => {
+        const checked = checkedScenarioArticles.has(article) ? "checked" : "";
+        return `
+          <tr>
+            <td>
+              <label class="article-check">
+                <input type="checkbox" data-article="${article}" ${checked}>
+                <span>${article}</span>
+              </label>
+            </td>
+            ${values.map(value => `<td>${value ? formatFull(value) : "0"}</td>`).join("")}
+            <td>${formatFull(rowTotal)}</td>
+          </tr>
+        `;
+      }).join("") + `
+        <tr class="scenario-total">
+          <td>Итого выбранных статей</td>
+          ${totalByPeriod.map(value => `<td>${formatFull(value)}</td>`).join("")}
+          <td>${formatFull(total)}</td>
+        </tr>
+        <tr class="scenario-potential">
+          <td>Потенциальная ЧП без этих расходов</td>
+          ${potentialNetByPeriod.map(value => `<td>${formatFull(value)}</td>`).join("")}
+          <td>${formatFull(potentialNetTotal)}</td>
+        </tr>
+      `;
+      drawScenarioResult({
+        netTotal,
+        potentialNetTotal,
+        total,
+        growth,
+        newMargin,
+        expensesTotal,
+        potentialExpensesTotal,
+        revenueTotal,
+        pointLabel: bookNames[scenarioBook.value],
+        periodLabel: rangeLabel(range)
+      });
+      syncScenarioScrollbar();
+    }
+
+    function syncScenarioScrollbar() {
+      requestAnimationFrame(() => {
+        scenarioScrollbarInner.style.width = `${scenarioTableWrap.scrollWidth}px`;
+        scenarioScrollbar.scrollLeft = scenarioTableWrap.scrollLeft;
+      });
+    }
+
+    function drawBeforeAfterChart(before, after) {
+      const w = 860, h = 330, l = 70, r = 40, t = 28, b = 52;
+      const rawMin = Math.min(0, before, after);
+      const rawMax = Math.max(0, before, after);
+      const span = Math.max(1, rawMax - rawMin);
+      const min = rawMin - span * 0.12;
+      const max = rawMax + span * 0.18;
+      const y = value => scale(value, min, max, h - b, t);
+      const axisY = y(0);
+      const bars = [
+        { name: "Было", value: before, color: colors.green, x: l + 190 },
+        { name: "Стало", value: after, color: "#2f5bd8", x: l + 490 }
+      ];
+      const grid = [0, 0.25, 0.5, 0.75, 1].map(p => {
+        const value = max - (max - min) * p;
+        const gy = t + (h - b - t) * p;
+        return `<line x1="${l}" y1="${gy}" x2="${w - r}" y2="${gy}" stroke="${colors.grid}"/>
+          <text x="${l - 10}" y="${gy + 4}" text-anchor="end" font-size="12" fill="${colors.text}">${formatMoney(value)}</text>`;
+      }).join("");
+      const content = bars.map(item => {
+        const valueY = y(item.value);
+        const barY = Math.min(valueY, axisY);
+        const barH = Math.max(1, Math.abs(axisY - valueY));
+        const labelY = item.value >= 0 ? barY - 14 : barY + barH + 24;
+        return `
+          <rect x="${item.x}" y="${barY}" width="150" height="${barH}" rx="14" fill="${item.color}"/>
+          <text x="${item.x + 75}" y="${labelY}" text-anchor="middle" font-size="18" font-weight="850" fill="${item.color}">${formatMoney(item.value)}</text>
+          <text x="${item.x + 75}" y="${h - 18}" text-anchor="middle" font-size="13" font-weight="760" fill="${colors.text}">${item.name}</text>
+        `;
+      }).join("");
+      return `
+        <h3>Диаграмма было / стало</h3>
+        <p>чистая прибыль</p>
+        <svg viewBox="0 0 ${w} ${h}" role="img" aria-label="Диаграмма было стало">
+          ${grid}
+          <line x1="${l}" y1="${axisY}" x2="${w - r}" y2="${axisY}" stroke="${colors.grid}" stroke-dasharray="7 7"/>
+          ${content}
+        </svg>
+      `;
+    }
+
+    function drawWaterfallChart(before, change, after) {
+      const w = 860, h = 330, l = 78, r = 40, t = 28, b = 58;
+      const rawMin = Math.min(0, before, after, before + change);
+      const rawMax = Math.max(0, before, after, before + change);
+      const span = Math.max(1, rawMax - rawMin);
+      const min = rawMin - span * 0.12;
+      const max = rawMax + span * 0.18;
+      const y = value => scale(value, min, max, h - b, t);
+      const axisY = y(0);
+      const barWidth = 130;
+      const bars = [
+        { name: "Текущая ЧП", start: 0, end: before, color: before >= 0 ? colors.green : colors.red, x: l + 105 },
+        { name: "Исключено", start: before, end: before + change, color: change >= 0 ? "#2f5bd8" : colors.red, x: l + 325 },
+        { name: "Потенциал", start: 0, end: after, color: after >= 0 ? "#2f5bd8" : colors.red, x: l + 545 }
+      ];
+      const grid = [0, 0.25, 0.5, 0.75, 1].map(p => {
+        const value = max - (max - min) * p;
+        const gy = t + (h - b - t) * p;
+        return `<line x1="${l}" y1="${gy}" x2="${w - r}" y2="${gy}" stroke="${colors.grid}"/>
+          <text x="${l - 10}" y="${gy + 4}" text-anchor="end" font-size="12" fill="${colors.text}">${formatMoney(value)}</text>`;
+      }).join("");
+      const connectors = `
+        <line x1="${bars[0].x + barWidth}" y1="${y(before)}" x2="${bars[1].x}" y2="${y(before)}" stroke="${colors.muted}" stroke-dasharray="6 6"/>
+        <line x1="${bars[1].x + barWidth}" y1="${y(after)}" x2="${bars[2].x}" y2="${y(after)}" stroke="${colors.muted}" stroke-dasharray="6 6"/>
+      `;
+      const content = bars.map(item => {
+        const yStart = y(item.start);
+        const yEnd = y(item.end);
+        const barY = Math.min(yStart, yEnd);
+        const barH = Math.max(1, Math.abs(yStart - yEnd));
+        const value = item.end - item.start;
+        const labelValue = item.name === "Исключено" ? value : item.end;
+        const labelY = item.end >= item.start ? barY - 12 : barY + barH + 22;
+        return `
+          <rect x="${item.x}" y="${barY}" width="${barWidth}" height="${barH}" rx="13" fill="${item.color}"/>
+          <text x="${item.x + barWidth / 2}" y="${labelY}" text-anchor="middle" font-size="16" font-weight="850" fill="${item.color}">${formatMoney(labelValue)}</text>
+          <text x="${item.x + barWidth / 2}" y="${h - 22}" text-anchor="middle" font-size="12" font-weight="760" fill="${colors.text}">${item.name}</text>
+        `;
+      }).join("");
+      return `
+        <h3>Водопад сценария</h3>
+        <p>как выбранные расходы меняют чистую прибыль</p>
+        <svg viewBox="0 0 ${w} ${h}" role="img" aria-label="Водопад сценария">
+          ${grid}
+          <line x1="${l}" y1="${axisY}" x2="${w - r}" y2="${axisY}" stroke="${colors.grid}" stroke-dasharray="7 7"/>
+          ${connectors}
+          ${content}
+        </svg>
+      `;
+    }
+
+    function drawScenarioResult(metrics) {
+      document.querySelector("#scenarioResult").innerHTML = `
+        <div class="scenario-result-head">Итог сценария: ${metrics.pointLabel}, ${metrics.periodLabel}</div>
+        <div class="scenario-result-grid">
+          ${[
+            ["Потенциальная чистая прибыль", formatFull(metrics.potentialNetTotal)],
+            ["Абсолютный прирост прибыли", formatFull(metrics.total)],
+            ["Процент роста прибыли", `${metrics.growth >= 0 ? "+" : ""}${formatPct(metrics.growth)}`],
+            ["Новая рентабельность", formatPct(metrics.newMargin)],
+            ["Текущие расходы", formatFull(metrics.expensesTotal)],
+            ["Потенциальные расходы", formatFull(metrics.potentialExpensesTotal)],
+            ["Исключено расходов", formatFull(metrics.total)],
+            ["Выручка в базе", formatFull(metrics.revenueTotal)]
+          ].map(([title, value]) => `
+            <article class="scenario-result-card">
+              <span>${title}</span>
+              <strong>${value}</strong>
+            </article>
+          `).join("")}
+        </div>
+        <div class="scenario-charts">
+          <div class="scenario-before-after">${drawBeforeAfterChart(metrics.netTotal, metrics.potentialNetTotal)}</div>
+          <div class="scenario-waterfall">${drawWaterfallChart(metrics.netTotal, metrics.total, metrics.potentialNetTotal)}</div>
+        </div>
+      `;
+    }
+
+    function render() {
+      updateScreenIntro();
+      const isScenario = activeTab === "scenario";
+      const isMemo = activeTab === "memo";
+      analysisSections.forEach(section => section.classList.toggle("is-hidden", isScenario || isMemo));
+      scenarioSection.classList.toggle("is-hidden", !isScenario);
+      memoSection.classList.toggle("is-hidden", !isMemo);
+      if (isMemo) return;
+      if (isScenario) {
+        drawScenario();
+        return;
+      }
+
+      const state = selected();
+      drawPeriodSummary(state);
+      drawCards(state);
+      drawBarTrendChart(document.querySelector("#revenueChart"), chartLines(state, colors.teal, [colors.teal, colors.blue]), "r", document.querySelector("#revenueCaption"), `${rangeLabel(state.range)}: столбики по месяцам и трендовая линия выручки`);
+      drawBarTrendChart(document.querySelector("#profitChart"), chartLines(state, colors.amber, [colors.amber, colors.red]), "net", document.querySelector("#profitCaption"), `${rangeLabel(state.range)}: столбики по месяцам и трендовая линия чистой прибыли`);
+      drawChannels(state);
+      drawExpenses(state);
+      drawExpenseStructure(state);
+      drawMonthlyTable(state);
+    }
+
+    tabButtons.forEach(button => button.addEventListener("click", () => setActiveTab(button.dataset.tab)));
+    document.addEventListener("click", event => {
+      const button = event.target.closest?.(".tab-btn");
+      if (button) setActiveTab(button.dataset.tab);
+    });
+    fromPeriod.addEventListener("change", render);
+    toPeriod.addEventListener("change", render);
+    scenarioBook.addEventListener("change", () => {
+      fillPeriodSelects(true);
+      render();
+    });
+    scenarioBody.addEventListener("change", event => {
+      const input = event.target.closest?.("input[data-article]");
+      if (!input) return;
+      if (input.checked) checkedScenarioArticles.add(input.dataset.article);
+      else checkedScenarioArticles.delete(input.dataset.article);
+      drawScenario();
+    });
+    scenarioTableWrap.addEventListener("scroll", () => {
+      scenarioScrollbar.scrollLeft = scenarioTableWrap.scrollLeft;
+    });
+    scenarioScrollbar.addEventListener("scroll", () => {
+      scenarioTableWrap.scrollLeft = scenarioScrollbar.scrollLeft;
+    });
+    document.querySelector("#scenarioAll").addEventListener("click", () => {
+      checkedScenarioArticles = new Set(scenarioArticles);
+      drawScenario();
+    });
+    document.querySelector("#scenarioNone").addEventListener("click", () => {
+      checkedScenarioArticles = new Set();
+      drawScenario();
+    });
+    setActiveTab("m1", false);
+  </script>
+</body>
+</html>
